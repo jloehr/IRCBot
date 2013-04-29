@@ -6,4 +6,4 @@
 Makefile.dep
 
 #folder
-*/bin/*
+bin/
