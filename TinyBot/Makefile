@@ -1,0 +1,32 @@
+INCDIR = -I ./include/
+LIBDIR = ./lib/
+BUILDDIR = ./bin/
+SOURCEDIR = ./src/
+
+CC=g++
+CPPFLAGS=-c -Wall $(INCDIR) -ggdb
+LDFLAGS= -lev -pthread -lrt -L$(LIBDIR)
+
+SOURCES=$(wildcard $(SOURCEDIR)*.cpp)
+OBJECTS=$(SOURCES:.cpp=.o)
+EXECUTABLE=$(BUILDDIR)tinybot
+
+all: $(EXECUTABLE)
+clean: cleanup Makefile.dep $(EXECUTABLE) 
+
+# dependencies collected with cc -MM
+-include Makefile.dep
+Makefile.dep	: $(SOURCES)
+	$(CC) -MM $(CPPFLAGS) $^ > $@
+
+# Compile
+%.o	: %.cpp
+	$(CC) $(CPPFLAGS) -c $< -o $@
+
+# Link
+$(EXECUTABLE): $(OBJECTS) 
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+
+#clean
+cleanup:
+	rm -f $(EXECUTABLE) $(SOURCEDIR)*.o Makefile.dep
