@@ -1,0 +1,8 @@
+#generic files
+*.o
+
+#specific files
+Makefile.dep
+
+#folder
+*/bin/*
