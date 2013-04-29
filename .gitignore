@@ -1,5 +1,6 @@
 #generic files
 *.o
+*.sublime-*
 
 #specific files
 Makefile.dep
