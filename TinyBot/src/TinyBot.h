@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "types.h"
+#include "ControlPanel.h"
 
 class CTinyBot
 {
@@ -14,6 +15,7 @@ public:
 	~CTinyBot();
 
 	void Run();
+	void Stop();
 
 
 private:
@@ -22,5 +24,10 @@ private:
 	const int m_WorkerThreadNum;
 	const std::string m_Botname;
 
+	CControlPanel m_ControlPanel;
 
+	void RunLoop();
+
+	void StartWatchers();
+	void StopWatchers();
 };

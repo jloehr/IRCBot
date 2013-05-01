@@ -2,7 +2,7 @@
 
 const char * const CTinyBotFactory::Defaultname = "TinyBot";
 
-CTinyBot & CTinyBotFactory::CreateTinyBot(const int argc, const char* argv[])
+CTinyBot * CTinyBotFactory::CreateTinyBot(const int argc, const char* argv[])
 {
 	CTinyBotFactory Fax(argc, argv);
 
@@ -32,13 +32,13 @@ CTinyBotFactory::~CTinyBotFactory()
 //											//
 //------------------------------------------//
 
-CTinyBot & CTinyBotFactory::Build()
+CTinyBot * CTinyBotFactory::Build()
 {
 	ParseArguments();
 
 	m_Product = new CTinyBot(m_WorkerThreadNum, m_Botname);
 
-	return *m_Product;
+	return m_Product;
 }
 
 //------------------------------------------//
@@ -51,9 +51,9 @@ void CTinyBotFactory::ParseArguments()
 {
 	// -t int		Workerthreads
 	// -n string 	Botname
-	//	server #channel,pass #channel,pass server2 #channel #channel,pass
-	//				bsp.: irc.quakenet.org #foo,bar #help foo.randomirc.org #lobby
-	//				joins channel foo with pass bar and channel help on irc.quakenet.org and also channel lobby on foo.randomirc.org
+	//	server:port #channel,pass #channel,pass server2 #channel #channel,pass
+	//				bsp.: irc.quakenet.org #foo,bar #help foo.randomirc.org:12345 #lobby
+	//				joins channel foo with pass bar and channel help on irc.quakenet.org and also channel lobby on foo.randomirc.org with port
 
 	for (int i = 0; i < m_argc; ++i)
 	{

@@ -4,11 +4,12 @@
 #include <stdlib.h>
 
 #include "TinyBot.h"
+#include "types.h"
 
 class CTinyBotFactory
 {
 public:
-	static CTinyBot & CreateTinyBot(const int argc, const char* argv[]);
+	static CTinyBot * CreateTinyBot(const int argc, const char* argv[]);
 
 private:
 	CTinyBotFactory(const int argc, const char* argv[]);
@@ -20,9 +21,10 @@ private:
 
 	int m_WorkerThreadNum;
 	std::string m_Botname;
+	StringPairStringVectorPairVector ServerVector;
 
 	CTinyBot * m_Product;
 
-	CTinyBot & Build();
+	CTinyBot * Build();
 	void ParseArguments();
 };

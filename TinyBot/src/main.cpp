@@ -7,9 +7,11 @@ int main( int argc, const char* argv[] )
 {
 	std::cout << "Starting TinyBot a tiny IRC Bot" << std::endl << std::endl;
 
-	CTinyBot & BotInstance = CTinyBotFactory::CreateTinyBot(argc, argv);
+	CTinyBot * BotInstance = CTinyBotFactory::CreateTinyBot(argc, argv);
 
-	BotInstance.Run();
+	BotInstance->Run();
+
+	delete BotInstance;
 
 	return 0;
 }
