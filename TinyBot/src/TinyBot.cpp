@@ -52,6 +52,29 @@ void CTinyBot::Stop()
 	std::cout << "Breaking Loop...\n" << std::endl;
  }
 
+
+//------------------------------------------//
+//											//
+//				Connect						//
+//											//
+//------------------------------------------//
+
+void CTinyBot::Connect(StringPair * Server, StringPairVector * Channels)
+{
+	std::string Port = (Server->second == NULL) ? "-" : (*(Server->second));
+	std::cout << "Connect to " << (*(Server->first)) << "(:" << Port << ") joining channels(" << Channels->size() << "):" << std::endl;
+	
+	for(StringPairVector::iterator it = Channels->begin(); it != Channels->end(); ++it)
+	{
+		std::string Password = ((*it)->second == NULL) ? "-" : (*((*it)->second));
+		std::cout << (*((*it)->first)) << " , " << Password << std::endl;
+	}
+
+	std::cout << std::endl;
+	
+}
+
+
 //------------------------------------------//
 //											//
 //				Watchers					//
@@ -67,3 +90,10 @@ void CTinyBot::StopWatchers()
 {
 	m_ControlPanel.Stop();
 }
+
+
+//------------------------------------------//
+//											//
+//				Threads						//
+//											//
+//------------------------------------------//

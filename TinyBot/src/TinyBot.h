@@ -17,6 +17,7 @@ public:
 	void Run();
 	void Stop();
 
+	void Connect(StringPair * Server, StringPairVector * Channels);
 
 private:
 	CTinyBot(const int WorkerThreadNum, const std::string Botname);

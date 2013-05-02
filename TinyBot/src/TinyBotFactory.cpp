@@ -16,7 +16,9 @@ CTinyBot * CTinyBotFactory::CreateTinyBot(const int argc, const char* argv[])
 //------------------------------------------//
 
 CTinyBotFactory::CTinyBotFactory(const int argc, const char* argv[])
-	:m_argc(argc), m_argv(argv), m_WorkerThreadNum(1), m_Botname(CTinyBotFactory::Defaultname), m_Product(NULL)
+	:m_argc(argc), m_argv(argv)
+	,m_WorkerThreadNum(1), m_Botname(CTinyBotFactory::Defaultname), m_ChannelVector(NULL)
+	,m_Product(NULL)
 {
 
 }
@@ -38,14 +40,27 @@ CTinyBot * CTinyBotFactory::Build()
 
 	m_Product = new CTinyBot(m_WorkerThreadNum, m_Botname);
 
+	SetupServers();
+
 	return m_Product;
 }
+
+
+void CTinyBotFactory::SetupServers()
+{
+	for(StringPairStringVectorPairVector::iterator it = m_ServerVector.begin(); it != m_ServerVector.end(); ++it)
+	{
+		m_Product->Connect((*it)->first, (*it)->second);
+	}
+}
+
 
 //------------------------------------------//
 //											//
 //		  			Parsing					//
 //											//
 //------------------------------------------//
+
 
 void CTinyBotFactory::ParseArguments()
 {
@@ -55,20 +70,87 @@ void CTinyBotFactory::ParseArguments()
 	//				bsp.: irc.quakenet.org #foo,bar #help foo.randomirc.org:12345 #lobby
 	//				joins channel foo with pass bar and channel help on irc.quakenet.org and also channel lobby on foo.randomirc.org with port
 
-	for (int i = 0; i < m_argc; ++i)
+
+
+	for (int i = 1; i < m_argc; ++i)
 	{
-		if((m_argv[i][0] == '-') && (m_argv[i][2] == '\0'))
-			{
-				switch(m_argv[i][1])
+		switch(m_argv[i][0])
+		{
+
+			//Channel
+			case '#':
+			case '&':
+				
+				if(m_ChannelVector == NULL)
 				{
-				case 't':
-					m_WorkerThreadNum = atoi(m_argv[++i]);
-					break;
-				case 'n':
-					m_Botname = m_argv[++i];
+					std::cout << "Warning: Channel " << m_argv[i] << "will be ignored. Please check your command line paramenter" << std::endl;
+				}
+				else
+				{
+					const char * DelimiterPosition = strrchr(m_argv[i], ',');
+
+					std::string * ChannelName = NULL;
+					std::string * ChannelPass = NULL;
+
+					if(DelimiterPosition == NULL)
+					{
+						ChannelName = new std::string(m_argv[i]);
+					}
+					else
+					{
+						ChannelName = new std::string(m_argv[i], (size_t)(DelimiterPosition - m_argv[i]));
+						ChannelPass = new std::string(DelimiterPosition + 1);
+					}
+					
+					m_ChannelVector->push_back(new StringPair(ChannelName, ChannelPass));
+				}
+				break;
+
+			//Flag
+			case '-':
+				if(m_argv[i][2] == '\0')
+				{
+					switch(m_argv[i][1])
+					{
+					case 't':
+						m_WorkerThreadNum = atoi(m_argv[++i]);
+						break;
+					case 'n':
+						m_Botname = m_argv[++i];
+						break;
+					}
 					break;
 				}
-			}
+
+			//Server	
+			default:
+				{
+					const char * DelimiterPosition = strrchr(m_argv[i], ':');
+
+					std::string * ServerAdress = NULL;
+					std::string * ServerPort = NULL;
+					
+					if(DelimiterPosition == NULL)
+					{
+						ServerAdress = new std::string(m_argv[i]);
+					}
+					else
+					{
+
+						ServerAdress = new std::string(m_argv[i], (size_t)(DelimiterPosition - m_argv[i]));
+						ServerPort = new std::string(DelimiterPosition + 1);
+					}
+
+					m_ChannelVector = new StringPairVector();
+
+					StringPairStringVectorPair * NewServer = new StringPairStringVectorPair(new StringPair(ServerAdress, ServerPort), m_ChannelVector);
+
+
+					m_ServerVector.push_back(NewServer);
+				}
+				break;
+		}
+
 	}
 
 	if(m_WorkerThreadNum < 1)

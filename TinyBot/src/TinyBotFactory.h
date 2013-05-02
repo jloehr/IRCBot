@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <string>
 #include <stdlib.h>
 
@@ -21,10 +22,12 @@ private:
 
 	int m_WorkerThreadNum;
 	std::string m_Botname;
-	StringPairStringVectorPairVector ServerVector;
+	StringPairStringVectorPairVector m_ServerVector;
+	StringPairVector * m_ChannelVector;
 
 	CTinyBot * m_Product;
 
 	CTinyBot * Build();
 	void ParseArguments();
+	void SetupServers();
 };
