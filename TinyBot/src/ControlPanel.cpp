@@ -52,7 +52,7 @@ void CControlPanel::io_cb_StdIn(ev::io   &w, int revents)
 
 	std::getline (std::cin, InputBuffer);
 
-	if(InputBuffer.compare("exit") || InputBuffer.compare("quit"))
+	if((InputBuffer.compare("exit") == 0) || (InputBuffer.compare("quit") == 0))
 	{
 		std::cout << "Exiting...\n" << std::endl;
 
