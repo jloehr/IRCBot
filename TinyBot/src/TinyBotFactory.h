@@ -19,8 +19,7 @@ private:
 	static const char * const Defaultname;
 	const int m_argc;
 	const char** m_argv;
-
-	int m_WorkerThreadNum;
+	
 	std::string m_Botname;
 	StringPairStringVectorPairVector m_ServerVector;
 	StringPairVector * m_ChannelVector;
@@ -30,4 +29,6 @@ private:
 	CTinyBot * Build();
 	void ParseArguments();
 	void SetupServers();
+
+	void CleanUp(StringPairStringVectorPair * Entry);
 };

@@ -17,7 +17,7 @@ CTinyBot * CTinyBotFactory::CreateTinyBot(const int argc, const char* argv[])
 
 CTinyBotFactory::CTinyBotFactory(const int argc, const char* argv[])
 	:m_argc(argc), m_argv(argv)
-	,m_WorkerThreadNum(1), m_Botname(CTinyBotFactory::Defaultname), m_ChannelVector(NULL)
+	,m_Botname(CTinyBotFactory::Defaultname), m_ChannelVector(NULL)
 	,m_Product(NULL)
 {
 
@@ -38,7 +38,7 @@ CTinyBot * CTinyBotFactory::Build()
 {
 	ParseArguments();
 
-	m_Product = new CTinyBot(m_WorkerThreadNum, m_Botname);
+	m_Product = new CTinyBot(m_Botname);
 
 	SetupServers();
 
@@ -51,7 +51,11 @@ void CTinyBotFactory::SetupServers()
 	for(StringPairStringVectorPairVector::iterator it = m_ServerVector.begin(); it != m_ServerVector.end(); ++it)
 	{
 		m_Product->Connect((*it)->first, (*it)->second);
+		CleanUp(*it);
+		delete (*it);
 	}
+
+	m_ServerVector.clear();
 }
 
 
@@ -64,7 +68,6 @@ void CTinyBotFactory::SetupServers()
 
 void CTinyBotFactory::ParseArguments()
 {
-	// -t int		Workerthreads
 	// -n string 	Botname
 	//	server:port #channel,pass #channel,pass server2 #channel #channel,pass
 	//				bsp.: irc.quakenet.org #foo,bar #help foo.randomirc.org:12345 #lobby
@@ -95,6 +98,7 @@ void CTinyBotFactory::ParseArguments()
 					if(DelimiterPosition == NULL)
 					{
 						ChannelName = new std::string(m_argv[i]);
+						ChannelPass = new std::string();
 					}
 					else
 					{
@@ -112,9 +116,6 @@ void CTinyBotFactory::ParseArguments()
 				{
 					switch(m_argv[i][1])
 					{
-					case 't':
-						m_WorkerThreadNum = atoi(m_argv[++i]);
-						break;
 					case 'n':
 						m_Botname = m_argv[++i];
 						break;
@@ -133,6 +134,7 @@ void CTinyBotFactory::ParseArguments()
 					if(DelimiterPosition == NULL)
 					{
 						ServerAdress = new std::string(m_argv[i]);
+						ServerPort = new std::string();
 					}
 					else
 					{
@@ -152,9 +154,43 @@ void CTinyBotFactory::ParseArguments()
 		}
 
 	}
+}
 
-	if(m_WorkerThreadNum < 1)
+//------------------------------------------//
+//											//
+//		  			CleanUp					//
+//											//
+//------------------------------------------//
+
+
+void CTinyBotFactory::CleanUp(StringPairStringVectorPair * Entry)
+{
+	StringPair * Tmp;
+	StringPairVector * TmpVector;
+
+	// Delete String Pair
+	Tmp = Entry->first;
+	Entry->first = NULL;
+
+	delete Tmp->first;
+	delete Tmp->second;
+
+	delete Tmp;
+
+	Tmp = NULL;
+
+	//delete Vector Content
+	TmpVector = Entry->second;
+	for(StringPairVector::iterator it = TmpVector->begin(); it != TmpVector->end(); ++it)
 	{
-		m_WorkerThreadNum = 1;
+		Tmp = (*it);
+		
+		delete Tmp->first;
+		delete Tmp->second;
+		delete Tmp;
 	}
+	
+	delete TmpVector;
+
+	Entry->second = NULL;
 }

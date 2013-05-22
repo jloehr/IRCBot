@@ -7,6 +7,7 @@
 
 #include "types.h"
 #include "ControlPanel.h"
+#include "Server.h"
 
 class CTinyBot
 {
@@ -20,12 +21,12 @@ public:
 	void Connect(StringPair * Server, StringPairVector * Channels);
 
 private:
-	CTinyBot(const int WorkerThreadNum, const std::string Botname);
+	CTinyBot(const std::string Botname);
 
-	const int m_WorkerThreadNum;
 	const std::string m_Botname;
-
 	CControlPanel m_ControlPanel;
+
+	ServerVector m_Servers;
 
 	void RunLoop();
 

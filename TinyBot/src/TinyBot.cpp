@@ -7,8 +7,8 @@
 //											//
 //------------------------------------------//
 
-CTinyBot::CTinyBot(const int WorkerThreadNum, const std::string Botname)
-	:m_WorkerThreadNum(WorkerThreadNum), m_Botname(Botname)
+CTinyBot::CTinyBot(const std::string Botname)
+	:m_Botname(Botname)
 	,m_ControlPanel(this)
 {
 
@@ -16,7 +16,12 @@ CTinyBot::CTinyBot(const int WorkerThreadNum, const std::string Botname)
 
 CTinyBot::~CTinyBot()
 {
-
+	for(ServerVector::iterator it = m_Servers.begin(); it != m_Servers.end(); ++it)
+	{
+		delete (*it);
+	}
+	
+	m_Servers.clear();
 }
 
 //------------------------------------------//
@@ -27,7 +32,7 @@ CTinyBot::~CTinyBot()
 
 void CTinyBot::Run()
 {
-	std::cout << "Hello my name is " << m_Botname << ". I'm going to run with " << m_WorkerThreadNum << " + 1 Threads" << std::endl;
+	std::cout << "Hello my name is " << m_Botname << "." << std::endl;
 
 	m_ControlPanel.Init();
 
@@ -68,10 +73,14 @@ void CTinyBot::Connect(StringPair * Server, StringPairVector * Channels)
 	{
 		std::string Password = ((*it)->second == NULL) ? "-" : (*((*it)->second));
 		std::cout << (*((*it)->first)) << " , " << Password << std::endl;
+
+
 	}
 
 	std::cout << std::endl;
 	
+	m_Servers.push_back(new CServer(&m_Botname, Server->first, Server->second, Channels));
+
 }
 
 
@@ -90,10 +99,3 @@ void CTinyBot::StopWatchers()
 {
 	m_ControlPanel.Stop();
 }
-
-
-//------------------------------------------//
-//											//
-//				Threads						//
-//											//
-//------------------------------------------//
