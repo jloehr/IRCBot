@@ -134,7 +134,7 @@ void CTinyBotFactory::ParseArguments()
 					if(DelimiterPosition == NULL)
 					{
 						ServerAdress = new std::string(m_argv[i]);
-						ServerPort = new std::string();
+						ServerPort = new std::string(DEFAULT_PORT);
 					}
 					else
 					{

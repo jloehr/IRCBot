@@ -32,9 +32,9 @@ CTinyBot::~CTinyBot()
 
 void CTinyBot::Run()
 {
-	std::cout << "Hello my name is " << m_Botname << "." << std::endl;
+	Output::Log({"Hello my name is ", m_Botname.c_str(), "."});
 
-	m_ControlPanel.Init();
+	Init();
 
 	StartWatchers();
 
@@ -54,9 +54,51 @@ void CTinyBot::Stop()
  {
 	ev_break (EV_DEFAULT_ EVBREAK_ALL);
 
-	std::cout << "Breaking Loop...\n" << std::endl;
+	Output::Log({"Breaking Loop..."});
  }
 
+//------------------------------------------//
+//											//
+//					Init					//
+//											//
+//------------------------------------------//
+
+void CTinyBot::Init()
+{
+	m_ControlPanel.Init();
+
+	for(ServerVector::iterator it = m_Servers.begin(); it != m_Servers.end(); ++it)
+	{
+		(*it)->Init();
+	}
+}
+
+//------------------------------------------//
+//											//
+//				  Watchers					//
+//											//
+//------------------------------------------//
+
+void CTinyBot::StartWatchers()
+{
+	m_ControlPanel.Start();
+
+	for(ServerVector::iterator it = m_Servers.begin(); it != m_Servers.end(); ++it)
+	{
+		(*it)->Start();
+	}
+	
+}
+
+void CTinyBot::StopWatchers()
+{
+	m_ControlPanel.Stop();
+
+	for(ServerVector::iterator it = m_Servers.begin(); it != m_Servers.end(); ++it)
+	{
+		(*it)->Stop();
+	}
+}
 
 //------------------------------------------//
 //											//
@@ -66,36 +108,5 @@ void CTinyBot::Stop()
 
 void CTinyBot::Connect(StringPair * Server, StringPairVector * Channels)
 {
-	std::string Port = (Server->second == NULL) ? "-" : (*(Server->second));
-	std::cout << "Connect to " << (*(Server->first)) << "(:" << Port << ") joining channels(" << Channels->size() << "):" << std::endl;
-	
-	for(StringPairVector::iterator it = Channels->begin(); it != Channels->end(); ++it)
-	{
-		std::string Password = ((*it)->second == NULL) ? "-" : (*((*it)->second));
-		std::cout << (*((*it)->first)) << " , " << Password << std::endl;
-
-
-	}
-
-	std::cout << std::endl;
-	
 	m_Servers.push_back(new CServer(&m_Botname, Server->first, Server->second, Channels));
-
-}
-
-
-//------------------------------------------//
-//											//
-//				Watchers					//
-//											//
-//------------------------------------------//
-
-void CTinyBot::StartWatchers()
-{
-	m_ControlPanel.Start();
-}
-
-void CTinyBot::StopWatchers()
-{
-	m_ControlPanel.Stop();
 }

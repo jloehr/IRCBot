@@ -7,6 +7,8 @@
 #include "TinyBot.h"
 #include "types.h"
 
+#define DEFAULT_PORT "6667"
+
 class CTinyBotFactory
 {
 public:

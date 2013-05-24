@@ -28,6 +28,7 @@ private:
 
 	ServerVector m_Servers;
 
+	void Init();
 	void RunLoop();
 
 	void StartWatchers();

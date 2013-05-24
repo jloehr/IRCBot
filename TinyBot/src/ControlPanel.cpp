@@ -16,7 +16,7 @@ CControlPanel::CControlPanel(CTinyBot * Bot)
 
 CControlPanel::~CControlPanel()
 {
-
+	m_ev_io_StdInWatcher.stop();
 }
 
 //------------------------------------------//
@@ -48,13 +48,21 @@ void CControlPanel::Stop()
 	
 void CControlPanel::io_cb_StdIn(ev::io   &w, int revents)
 {
+
+	if(revents & ev::ERROR)
+	{
+		Output::Error("ControlPanel", {"Unspecified Error signaled by Libev. Shutting down!"});
+		m_Bot.Stop();
+		return;
+	}
+
 	std::string InputBuffer;
 
 	std::getline (std::cin, InputBuffer);
 
 	if((InputBuffer.compare("exit") == 0) || (InputBuffer.compare("quit") == 0))
 	{
-		std::cout << "Exiting...\n" << std::endl;
+		Output::Log({"Exiting..."});
 
 		m_Bot.Stop();
 	}
