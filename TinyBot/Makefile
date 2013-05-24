@@ -4,7 +4,7 @@ BUILDDIR = ./bin/
 SOURCEDIR = ./src/
 
 CC=g++
-CPPFLAGS=-c -Wall $(INCDIR) -ggdb
+CPPFLAGS=-c -Wall -std=c++11 $(INCDIR) -ggdb
 LDFLAGS= -lev -pthread -lrt -L$(LIBDIR)
 
 SOURCES=$(wildcard $(SOURCEDIR)*.cpp)
