@@ -2,12 +2,11 @@
 
 namespace tinyirc
 {
-	enum IRCMessageType { Message };
+	enum IRCMessageType { Welcome, MOTD, Message, Notice, Join, Part, Mode, Quit, Topic, Away, UserList};
 
 	struct IRCMessage
 	{
 	public:
-		std::string Sender, Reciever, Data; 
 		IRCMessageType Type;
 	};
 }

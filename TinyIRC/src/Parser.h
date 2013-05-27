@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "IRCMessage.h"
 #include "IRCExceptions.h"
@@ -27,6 +28,9 @@ namespace tinyirc
 
 
 	private:
+		typedef void (CParser::*ProcessFunctinPointer)();
+		typedef std::map<std::string, ProcessFunctinPointer> ProcessFunctionMap;
+
 		static const size_t MaxNickLength;
 		static const std::string AllowedCharsForNick;
 		static const size_t MaxChannelNameLength;
@@ -34,9 +38,27 @@ namespace tinyirc
 		static const std::string NotAllowedCharsForMessages;
 		static const std::string CommandEnd;
 
-		std::string m_RecieveBuffer;
-		std::string m_ResponseBuffer;
+		static const ProcessFunctionMap m_ProcessFunctionMap;
 
-		bool m_Registered;
+		std::string m_RecieveBuffer;
+
+		IRCMessageVector m_MessageBuffer;
+		std::string m_ResponseBuffer;
+		bool m_CloseConnection;
+
+		std::string m_ParsingBuffer;
+		size_t m_ParsingPosition;
+		
+		std::string m_PrefixNick, m_PrefixUser, m_PrefixHost, m_Command;
+		std::vector<std::string> m_Params;
+
+		void ParseMessage();
+		void ParsePrefix();
+		void ParseCommand();
+		void ParseParams();
+
+		void ProcessMessage();
+		void ProcessWelcome();
+		void ProcessPing();
 	};
 }
