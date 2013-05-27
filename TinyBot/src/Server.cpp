@@ -144,8 +144,6 @@ void CServer::Login()
 	}
 
 	Send(PackageBuffer);
-
-	JoinChannels();
 }
 
 //------------------------------------------//
@@ -347,6 +345,15 @@ void CServer::io_cb_SocketRead(ev::io &w, int revents)
 	}
 
 	//Issue Messages
+	for(tinyirc::IRCMessageVector::iterator it = Messages.begin(); it != Messages.end(); ++it)
+	{
+		switch((*it).Type)
+		{
+			case tinyirc::Welcome:
+				JoinChannels();
+				break;
+		}
+	}
 
 }
 
