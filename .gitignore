@@ -7,3 +7,5 @@ Makefile.dep
 
 #folder
 bin/
+lib/
+include/
