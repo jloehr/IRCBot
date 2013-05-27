@@ -14,7 +14,7 @@ CServer::CServer(const std::string * Botname, const std::string * ServerAdress, 
 {
 	for(StringPairVector::iterator it = Channels->begin(); it != Channels->end(); ++it)
 	{
-		m_Channles.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*it)->first, (*it)->second)));
+		m_Channles.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*it)->first, (*it)->second, this)));
 	}
 
 	m_ReconnectTimer.set<CServer, &CServer::timer_cb_TryReconnect>(this);
@@ -90,7 +90,16 @@ bool CServer::Connect()
 
 	if(result != 0)
 	{
+		int SystemErrorNum = errno;
+
 		Output::Error("Server", { "GetAddrInfo faild for ", m_ServerAdress.c_str(), ":", m_ServerPort.c_str(), " -> ", gai_strerror(result)});
+		
+		if(result == EAI_SYSTEM)
+		{
+			Output::Error("Server", { "System Error -> ", strerror(SystemErrorNum)});
+		
+		}
+
 		return false;
 	}
 
@@ -116,6 +125,27 @@ bool CServer::Connect()
 
 	m_Connected = true;
 	return true;
+}
+
+
+void CServer::Login()
+{
+	std::string PackageBuffer;
+
+	try
+	{
+		m_IRCParser.Register(m_Botname, m_Botname, PackageBuffer);
+	}
+	catch(tinyirc::IRCException & exception)
+	{
+		Output::Error("Server", {"Exception cought on Login ->", exception.what()});
+		Stop();
+		return;
+	}
+
+	Send(PackageBuffer);
+
+	JoinChannels();
 }
 
 //------------------------------------------//
@@ -149,6 +179,7 @@ void CServer::Reconnect()
 	if(!m_ReconnectTimer.is_active())
 	{
 		m_ReconnectTimer.start();
+		ResetChannels();
 	}
 }
 
@@ -156,12 +187,25 @@ void CServer::Disconnect()
 {
 	Output::Log(m_ServerAdress.c_str(), {"Disconnecting"});
 
-	/*if(m_Connected)
+	if(m_Connected)
 	{
 		//Send Disconnect
-	}*/
+		std::string ExitMessage("Bot is shutting down!");
+		std::string Package;
+		try
+		{
+			m_IRCParser.GetClosingPackage(ExitMessage, Package);
+		}
+		catch(tinyirc::IRCException & exception)
+		{
+			Output::Error("Server", { "Exception cought on Disconnect -> ", exception.what()});
+		}
+
+		Send(Package);
+	}
 
 	Close();
+
 }
 
 //------------------------------------------//
@@ -232,6 +276,7 @@ void CServer::timer_cb_TryReconnect(ev::timer &w, int revents)
 	{
 		m_ReconnectTimer.stop();
 		StartSocketWatcher();
+		Login();
 	}
 }
 
@@ -252,7 +297,7 @@ void CServer::io_cb_SocketRead(ev::io &w, int revents)
 
 	Output::Log(m_ServerAdress.c_str(), {"Incomming"});
 
-	unsigned int ReadBytes = 0;
+	ssize_t ReadBytes = 0;
 
 	// Read read read
 	ReadBytes = recv(m_Socketfd, m_ReadBuffer, CServer::READ_BUFFER_SIZE, 0);
@@ -271,12 +316,61 @@ void CServer::io_cb_SocketRead(ev::io &w, int revents)
 		return;
 	}
 
-	m_ReadBuffer[ReadBytes] = '\0';
+	bool CloseConnection = false;
+	std::string Recieved(m_ReadBuffer, (size_t)ReadBytes);
+	std::string Response;
+	tinyirc::IRCMessageVector Messages;
 
-	Output::Log(m_ServerAdress.c_str(), {m_ReadBuffer});
+	Output::Log(m_ServerAdress.c_str(), {Recieved.c_str()});
 
 	//Parse
+	try 
+	{
+		CloseConnection = m_IRCParser.Parse(Recieved, Response, Messages);
+	}
+	catch(tinyirc::IRCException & exception)
+	{
+		Output::Error("Server", {"Exception cought while Parsing Incomming -> ",exception.what()});
+		Reconnect();
+		return;
+	}
+	
+	if(!Response.empty())
+	{
+		Send(Response);
+	}
 
+	if(CloseConnection)
+	{
+		Reconnect();
+		return;
+	}
+
+	//Issue Messages
+
+}
+
+//------------------------------------------//
+//											//
+//				  Channels					//
+//											//
+//------------------------------------------//
+
+void CServer::JoinChannels()
+{
+	for(ChannelMap::iterator it = m_Channles.begin(); it != m_Channles.end(); ++it)
+	{
+		it->second->Join();
+	}
+
+}
+
+void CServer::ResetChannels()
+{
+	for(ChannelMap::iterator it = m_Channles.begin(); it != m_Channles.end(); ++it)
+	{
+		it->second->Reset();
+	}
 }
 
 //------------------------------------------//
@@ -299,7 +393,7 @@ bool CServer::Send(const std::string & Message)
 		return false;	
 	}
 
-	Output::Log(m_ServerAdress.c_str(), {"Sending"});
+	Output::Log(m_ServerAdress.c_str(), {"Sending -> ", Message.c_str()});
 
 	int result = send(m_Socketfd, Message.c_str(), Message.size(), MSG_NOSIGNAL);
 
