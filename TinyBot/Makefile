@@ -1,18 +1,18 @@
-INCDIR = -I ./include/
+INCDIR = ./include/
 LIBDIR = ./lib/
 BUILDDIR = ./bin/
 SOURCEDIR = ./src/
 
 CC=g++
-CPPFLAGS=-c -Wall -std=c++11 $(INCDIR) -ggdb
-LDFLAGS= -lev -pthread -lrt -L$(LIBDIR)
+CPPFLAGS=-c -Wall -std=c++11 -I $(INCDIR) -ggdb
+LDFLAGS= -lev -L $(LIBDIR) -ltinyirc
 
 SOURCES=$(wildcard $(SOURCEDIR)*.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=$(BUILDDIR)tinybot
 
-all: $(EXECUTABLE)
-clean: cleanup Makefile.dep $(EXECUTABLE) 
+all: getlibraries $(EXECUTABLE)
+clean: cleanup Makefile.dep getlibraries $(EXECUTABLE) 
 
 # dependencies collected with cc -MM
 -include Makefile.dep
@@ -30,3 +30,20 @@ $(EXECUTABLE): $(OBJECTS)
 #clean
 cleanup:
 	rm -f $(EXECUTABLE) $(SOURCEDIR)*.o Makefile.dep
+
+
+#Get Libraries
+getlibraries: tinyirc
+
+TINYIRCDIR = ./../TinyIRC/
+TINYIRCBINDIR = $(TINYIRCDIR)bin/
+TINYIRCBIN = $(TINYIRCBINDIR)libtinyirc.a
+TINYIRCHEADERDIR = $(TINYIRCBINDIR)include/
+
+tinyirc:
+	cd $(TINYIRCDIR); make
+	-@mkdir $(LIBDIR)
+	-@mkdir $(INCDIR)
+	-@cp -u $(TINYIRCBIN) $(LIBDIR)
+	-@cp -u $(TINYIRCHEADERDIR)* $(INCDIR)
+
