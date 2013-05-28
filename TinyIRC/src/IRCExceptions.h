@@ -58,6 +58,19 @@ namespace tinyirc
 	//ChannelPass
 	IRCDerivedException(IRCInvalidChannelPassCharacters, "In the given Channel Password are invalid Characters found!")
 	
+	//Reciever
+	IRCDerivedException(IRCNoRecieverGiven, "The given Reciever is empty!")
+	IRCDerivedException(IRCRecieverTooLong, "The given Reciever is too long. It can be up to 200 Characters long.")
+	IRCDerivedException(IRCInvalidRecieverCharacters, "In the given Reciever are invalid Characters found!")
+	
+	//Message
+	IRCDerivedException(IRCNoMessageGiven, "The given Message is empty!")
+	IRCDerivedException(IRCInvalidMessageCharacters, "In the given Exit Message are invalid Characters found!")
+
 	//ExitMsg
 	IRCDerivedException(IRCInvalidExitMsgCharacters, "In the given Exit Message are invalid Characters found!")
+
+	//Message
+	IRCDerivedException(IRCMessageTooLong, "The IRC Message would exceed the maximun length of 512 Characters.")
+
 }
