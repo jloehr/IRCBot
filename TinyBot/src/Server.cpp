@@ -200,10 +200,13 @@ void CServer::Disconnect()
 		}
 
 		Send(Package);
+
+		shutdown(m_Socketfd, SHUT_WR);
 	}
-
-	Close();
-
+	else
+	{
+		Close();
+	}
 }
 
 //------------------------------------------//
