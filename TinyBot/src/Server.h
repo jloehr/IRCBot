@@ -64,6 +64,7 @@ private:
 	void timer_cb_TryReconnect(ev::timer &w, int revents);
 	void io_cb_SocketRead(ev::io &w, int revents);
 
+	void IssueMessages(const tinyirc::IRCMessage & Message);
 };
 
 inline

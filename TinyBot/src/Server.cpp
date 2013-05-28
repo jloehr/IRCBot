@@ -350,14 +350,19 @@ void CServer::io_cb_SocketRead(ev::io &w, int revents)
 	//Issue Messages
 	for(tinyirc::IRCMessageVector::iterator it = Messages.begin(); it != Messages.end(); ++it)
 	{
-		switch((*it).Type)
-		{
-			case tinyirc::Welcome:
-				JoinChannels();
-				break;
-		}
+		IssueMessages(*it);
 	}
 
+}
+	
+void CServer::IssueMessages(const tinyirc::IRCMessage & Message)
+{
+	switch(Message.Type)
+	{
+		case tinyirc::IRCMessageType::Welcome:
+			JoinChannels();
+			break;
+	}
 }
 
 //------------------------------------------//
