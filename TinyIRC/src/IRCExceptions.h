@@ -65,7 +65,7 @@ namespace tinyirc
 	
 	//Message
 	IRCDerivedException(IRCNoMessageGiven, "The given Message is empty!")
-	IRCDerivedException(IRCInvalidMessageCharacters, "In the given Exit Message are invalid Characters found!")
+	IRCDerivedException(IRCInvalidMessageCharacters, "In the given Message are invalid Characters found!")
 
 	//ExitMsg
 	IRCDerivedException(IRCInvalidExitMsgCharacters, "In the given Exit Message are invalid Characters found!")

@@ -214,7 +214,7 @@ namespace tinyirc
 	void CParser::ProcessWelcome()
 	{
 		IRCMessage Message;
-		Message.Type = Welcome;
+		Message.Type = IRCMessageType::Welcome;
 
 		m_MessageBuffer.push_back(Message);
 	}
@@ -228,8 +228,8 @@ namespace tinyirc
 	void CParser::ProcessMOTDEnd()
 	{
 		IRCMessage Message;
-		Message.Type = MOTD;
-		Message.Data.MOTD.Message = m_MOTDBuffer;
+		Message.Type = IRCMessageType::MOTD;
+		Message.Data.MOTD.Message = new std::string(m_MOTDBuffer);
 		m_MOTDBuffer.assign("");
 		m_MessageBuffer.push_back(Message);
 	}
@@ -273,10 +273,10 @@ namespace tinyirc
 			if(MapEntry != m_UserListBuffer.end())
 			{
 				IRCMessage Message;
-				Message.Type = UserList;
+				Message.Type = IRCMessageType::UserList;
 
-				Message.Data.UserList.Channel = Channel;
-				Message.Data.UserList.Nicks = MapEntry->second;
+				Message.Data.UserList.Channel = new std::string(Channel);
+				Message.Data.UserList.Nicks = new StringVector(MapEntry->second);
 
 				m_UserListBuffer.erase(MapEntry);
 
@@ -300,11 +300,11 @@ namespace tinyirc
 	{
 		IRCMessage Message;
 
-		Message.Type = NickChange; 
-		Message.Data.NickChange.Nick = m_PrefixNick;
-		Message.Data.NickChange.User = m_PrefixUser;
-		Message.Data.NickChange.Host = m_PrefixHost;
-		Message.Data.NickChange.NewNick = m_Params[0];
+		Message.Type = IRCMessageType::NickChange; 
+		Message.Data.NickChange.Nick = new std::string(m_PrefixNick);
+		Message.Data.NickChange.User = new std::string(m_PrefixUser);
+		Message.Data.NickChange.Host = new std::string(m_PrefixHost);
+		Message.Data.NickChange.NewNick = new std::string(m_Params[0]);
 
 		m_MessageBuffer.push_back(Message);
 	}
@@ -316,11 +316,11 @@ namespace tinyirc
 		{
 			IRCMessage Message;
 
-			Message.Type = Join;
-			Message.Data.Join.Nick = m_PrefixNick;
-			Message.Data.Join.User = m_PrefixUser;
-			Message.Data.Join.Host = m_PrefixHost;
-			Message.Data.Join.Channel = m_Params[0];
+			Message.Type = IRCMessageType::Join;
+			Message.Data.Join.Nick = new std::string(m_PrefixNick);
+			Message.Data.Join.User = new std::string(m_PrefixUser);
+			Message.Data.Join.Host = new std::string(m_PrefixHost);
+			Message.Data.Join.Channel = new std::string(m_Params[0]);
 
 			m_MessageBuffer.push_back(Message);
 		}
@@ -332,15 +332,15 @@ namespace tinyirc
 		{
 			IRCMessage Message;
 
-			Message.Type = Part;
-			Message.Data.Part.Nick = m_PrefixNick;
-			Message.Data.Part.User = m_PrefixUser;
-			Message.Data.Part.Host = m_PrefixHost;
-			Message.Data.Part.Channel = m_Params[0];
+			Message.Type = IRCMessageType::Part;
+			Message.Data.Part.Nick = new std::string(m_PrefixNick);
+			Message.Data.Part.User = new std::string(m_PrefixUser);
+			Message.Data.Part.Host = new std::string(m_PrefixHost);
+			Message.Data.Part.Channel = new std::string(m_Params[0]);
 
 			if(m_Params.size() > 1)
 			{
-				Message.Data.Part.Message = m_Params[m_Params.size() - 1];
+				Message.Data.Part.Message = new std::string(m_Params[m_Params.size() - 1]);
 			}
 
 			m_MessageBuffer.push_back(Message);
@@ -351,14 +351,14 @@ namespace tinyirc
 	{
 		IRCMessage Message;
 
-		Message.Type = Quit;
-		Message.Data.Quit.Nick = m_PrefixNick;
-		Message.Data.Quit.User = m_PrefixUser;
-		Message.Data.Quit.Host = m_PrefixHost;
+		Message.Type = IRCMessageType::Quit;
+		Message.Data.Quit.Nick = new std::string(m_PrefixNick);
+		Message.Data.Quit.User = new std::string(m_PrefixUser);
+		Message.Data.Quit.Host = new std::string(m_PrefixHost);
 		
 		if(m_Params.size() > 0)
 		{
-			Message.Data.Quit.Message = m_Params[m_Params.size() - 1];
+			Message.Data.Quit.Message = new std::string(m_Params[m_Params.size() - 1]);
 		}
 		
 		m_MessageBuffer.push_back(Message);
@@ -372,12 +372,12 @@ namespace tinyirc
 		{
 			IRCMessage Message;
 
-			Message.Type = Message;
-			Message.Data.Message.Nick = m_PrefixNick;
-			Message.Data.Message.User = m_PrefixUser;
-			Message.Data.Message.Host = m_PrefixHost;
-			Message.Data.Message.Reciever = m_Params[0];
-			Message.Data.Message.Message = m_Params[m_Params.size() - 1];
+			Message.Type = IRCMessageType::Message;
+			Message.Data.Message.Nick = new std::string(m_PrefixNick);
+			Message.Data.Message.User = new std::string(m_PrefixUser);
+			Message.Data.Message.Host = new std::string(m_PrefixHost);
+			Message.Data.Message.Reciever = new std::string(m_Params[0]);
+			Message.Data.Message.Message = new std::string(m_Params[m_Params.size() - 1]);
 
 			m_MessageBuffer.push_back(Message);
 		}
@@ -389,12 +389,12 @@ namespace tinyirc
 		{
 			IRCMessage Message;
 
-			Message.Type = Notice;
-			Message.Data.Message.Nick = m_PrefixNick;
-			Message.Data.Message.User = m_PrefixUser;
-			Message.Data.Message.Host = m_PrefixHost;
-			Message.Data.Message.Reciever = m_Params[0];
-			Message.Data.Message.Message = m_Params[m_Params.size() - 1];
+			Message.Type = IRCMessageType::Notice;
+			Message.Data.Message.Nick = new std::string(m_PrefixNick);
+			Message.Data.Message.User = new std::string(m_PrefixUser);
+			Message.Data.Message.Host = new std::string(m_PrefixHost);
+			Message.Data.Message.Reciever = new std::string(m_Params[0]);
+			Message.Data.Message.Message = new std::string(m_Params[m_Params.size() - 1]);
 
 			m_MessageBuffer.push_back(Message);
 		}
@@ -416,109 +416,84 @@ namespace tinyirc
 			if(ChannelMode)
 			{
 
-				Message.Type = ChannelMode;
-				Message.Data.ChannelMode.SenderNick = m_PrefixNick;
-				Message.Data.ChannelMode.SenderUser = m_PrefixUser;
-				Message.Data.ChannelMode.SenderHost = m_PrefixHost;
-				Message.Data.ChannelMode.Channel = Reciever;
+				Message.Type = IRCMessageType::ChannelMode;
+				Message.Data.ChannelMode.SenderNick = new std::string(m_PrefixNick);
+				Message.Data.ChannelMode.SenderUser = new std::string(m_PrefixUser);
+				Message.Data.ChannelMode.SenderHost = new std::string(m_PrefixHost);
+				Message.Data.ChannelMode.Channel = new std::string(Reciever);
 				Message.Data.ChannelMode.SetMode = SetMode;
 
 				if(m_Params.size() > 2)
 				{
-					Message.Data.ChannelMode.Param = m_Params[2];
+					Message.Data.ChannelMode.Param = new std::string(m_Params[2]);
 				}
 
 				switch(*it)
 				{
 					case 'o':
-						Message.Data.ChannelMode.Mode = Operator;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::Operator;
 						break;
 					case 'p':
-						Message.Data.ChannelMode.Mode = Privat;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::Privat;
 						break;
 					case 's':
-						Message.Data.ChannelMode.Mode = Secret;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::Secret;
 						break;
 					case 'i':
-						Message.Data.ChannelMode.Mode = InviteOnly;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::InviteOnly;
 						break;
 					case 't':
-						Message.Data.ChannelMode.Mode = TopicSettableOnlyByOps;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::TopicSettableOnlyByOps;
 						break;
 					case 'n':
-						Message.Data.ChannelMode.Mode = NoMessagesFromOutside;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::NoMessagesFromOutside;
 						break;
 					case 'm':
-						Message.Data.ChannelMode.Mode = Moderated;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::Moderated;
 						break;
 					case 'l':
-						Message.Data.ChannelMode.Mode = UserLimit;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::UserLimit;
 						break;
 					case 'b':
-						Message.Data.ChannelMode.Mode = Ban;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::Ban;
 						break;
 					case 'v':
-						Message.Data.ChannelMode.Mode = VerboseUser;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::VerboseUser;
 						break;
 					case 'k':
-						Message.Data.ChannelMode.Mode = Key;
+						Message.Data.ChannelMode.Mode = IRCChannelMode::Key;
 						break;
 				}
 			}
 			else
 			{
 
-				Message.Type = UserMode;
-				Message.Data.UserMode.SenderNick = m_PrefixNick;
-				Message.Data.UserMode.SenderUser = m_PrefixUser;
-				Message.Data.UserMode.SenderHost = m_PrefixHost;
-				Message.Data.UserMode.AffectedNick = Reciever;
+				Message.Type = IRCMessageType::UserMode;
+				Message.Data.UserMode.SenderNick = new std::string(m_PrefixNick);
+				Message.Data.UserMode.SenderUser = new std::string(m_PrefixUser);
+				Message.Data.UserMode.SenderHost = new std::string(m_PrefixHost);
+				Message.Data.UserMode.AffectedNick = new std::string(Reciever);
 				Message.Data.UserMode.SetMode = SetMode;
 
 				switch(*it)
 				{
 					case 'i':
-						Message.Data.ChannelMode.Mode = Invisible;
+						Message.Data.UserMode.Mode = IRCUserMode::Invisible;
 						break;
 					case 's':
-						Message.Data.ChannelMode.Mode = ServerNotices;
+						Message.Data.UserMode.Mode = IRCUserMode::ServerNotices;
 						break;
 					case 'w':
-						Message.Data.ChannelMode.Mode = Wallops;
+						Message.Data.UserMode.Mode = IRCUserMode::Wallops;
 						break;
 					case 'o':
-						Message.Data.ChannelMode.Mode = Operator;
+						Message.Data.UserMode.Mode = IRCUserMode::Operator;
 						break;
 				}
 			}
 
 			m_MessageBuffer.push_back(Message);
 		}
-
-		if((m_Params[0][0] == '#') || (m_Params[0][0] == '&'))
-		{
-			//ChannelMode
-			UserMode = false;
-
-			Message.Type = ChannelMode;
-			Message.Data.ChannelMode.SenderNick = m_PrefixNick;
-			Message.Data.ChannelMode.SenderUser = m_PrefixUser;
-			Message.Data.ChannelMode.SenderHost = m_PrefixHost;
-			Message.Data.ChannelMode.AffectedNick = m_Params[0];
-		}
-		else
-		{
-			//UserMode
-			UserMode = true;
-
-			Message.Type = UserMode;
-			Message.Data.UserMode.SenderNick = m_PrefixNick;
-			Message.Data.UserMode.SenderUser = m_PrefixUser;
-			Message.Data.UserMode.SenderHost = m_PrefixHost;
-			Message.Data.UserMode.AffectedNick = m_Params[0];
-		}
-
-		m_MessageBuffer.push_back(Message);
 	}
 
 	// --- Topic --- //
@@ -526,12 +501,12 @@ namespace tinyirc
 	{
 		IRCMessage Message;
 
-		Message.Type = Topic; 
-		Message.Data.Topic.Nick = m_PrefixNick;
-		Message.Data.Topic.User = m_PrefixUser;
-		Message.Data.Topic.Host = m_PrefixHost;
-		Message.Data.Topic.Channel = m_Params[0];
-		Message.Data.Topic.NewTopic = m_Params[1];
+		Message.Type = IRCMessageType::Topic; 
+		Message.Data.Topic.Nick = new std::string(m_PrefixNick);
+		Message.Data.Topic.User = new std::string(m_PrefixUser);
+		Message.Data.Topic.Host = new std::string(m_PrefixHost);
+		Message.Data.Topic.Channel = new std::string(m_Params[0]);
+		Message.Data.Topic.NewTopic = new std::string(m_Params[1]);
 
 		m_MessageBuffer.push_back(Message);
 		
@@ -542,16 +517,16 @@ namespace tinyirc
 	{
 		IRCMessage Message;
 
-		Message.Type = Kick; 
-		Message.Data.Kick.Nick = m_PrefixNick;
-		Message.Data.Kick.User = m_PrefixUser;
-		Message.Data.Kick.Host = m_PrefixHost;
-		Message.Data.Kick.Channel = m_Params[0];
-		Message.Data.Kick.Victim = m_Params[1];
+		Message.Type = IRCMessageType::Kick; 
+		Message.Data.Kick.Nick = new std::string(m_PrefixNick);
+		Message.Data.Kick.User = new std::string(m_PrefixUser);
+		Message.Data.Kick.Host = new std::string(m_PrefixHost);
+		Message.Data.Kick.Channel = new std::string(m_Params[0]);
+		Message.Data.Kick.Victim = new std::string(m_Params[1]);
 
 		if(m_Params.size() > 2)
 		{
-			Message.Data.Kick.Reason = m_Params[2];
+			Message.Data.Kick.Reason = new std::string(m_Params[2]);
 		}
 
 		m_MessageBuffer.push_back(Message);
@@ -679,7 +654,7 @@ namespace tinyirc
 			throw IRCMessageTooLong();
 		}
 
-		Package += "PRIVMSG " + Reciever + " :" + Message + CParser::CommandEnd
+		Package += "PRIVMSG " + Reciever + " :" + Message + CParser::CommandEnd;
 	}
 
 	//------------------------------------------//
