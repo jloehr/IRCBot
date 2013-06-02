@@ -31,6 +31,11 @@ namespace tinyirc
 			struct  
 			{
 				std::string * Message;
+			} Welcome;
+
+			struct  
+			{
+				std::string * Message;
 			} MOTD;
 
 			struct
@@ -114,6 +119,10 @@ namespace tinyirc
 
 			switch(Type)
 			{
+				case IRCMessageType::Welcome:
+					Data.Welcome.Message = Copy(Source.Data.Welcome.Message);
+					break;
+
 				case IRCMessageType::MOTD:
 					Data.MOTD.Message = Copy(Source.Data.MOTD.Message);
 					break;
@@ -207,6 +216,10 @@ namespace tinyirc
 		{
 			switch(Type)
 			{
+				case IRCMessageType::Welcome:
+					Delete(Data.Welcome.Message);
+					break;
+
 				case IRCMessageType::MOTD:
 					Delete(Data.MOTD.Message);
 					break;

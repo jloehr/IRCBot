@@ -224,6 +224,7 @@ namespace tinyirc
 	{
 		IRCMessage Message;
 		Message.Type = IRCMessageType::Welcome;
+		Message.Data.Welcome.Message = new std::string(m_Params[m_Params.size() - 1]);
 
 		m_MessageBuffer.push_back(Message);
 	}
