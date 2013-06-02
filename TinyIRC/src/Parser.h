@@ -69,6 +69,7 @@ namespace tinyirc
 		void ProcessMOTDEnd();
 		void ProcessNameReply();
 		void ProcessNameReplyEnd();
+		void ProcessTopic();
 
 		void ProcessPing();
 		void ProcessNick();
@@ -78,7 +79,7 @@ namespace tinyirc
 		void ProcessMessage();
 		void ProcessNotice();
 		void ProcessMode();
-		void ProcessTopic();
+		void ProcessTopicChanged();
 		void ProcessKick();
 	};
 }

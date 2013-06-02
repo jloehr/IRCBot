@@ -8,7 +8,7 @@ namespace tinyirc
 {
 	namespace IRCMessageType
 	{
-		enum Type { Undefined, Welcome, MOTD, NickChange, UserList, Message, Notice, Join, Part, Quit, UserMode, ChannelMode, Topic, Kick};
+		enum Type { Undefined, Welcome, MOTD, NickChange, UserList, Topic, Message, Notice, Join, Part, Quit, UserMode, ChannelMode, TopicChanged, Kick};
 	}
 
 	namespace IRCUserMode
@@ -18,7 +18,7 @@ namespace tinyirc
 
 	namespace IRCChannelMode
 	{
-		enum Type { Operator, Privat, Secret, InviteOnly, TopicSettableOnlyByOps, NoMessagesFromOutside, Moderated, UserLimit, Ban, VerboseUser, Key };
+		enum Type { Operator, Privat, Secret, InviteOnly, TopicSettableOnlyByOps, NoMessagesFromOutside, Moderated, UserLimit, Ban, Voice, Key };
 	}
 
 	struct IRCMessage
@@ -46,6 +46,11 @@ namespace tinyirc
 
 			struct
 			{
+				std::string * Channel, * Topic;
+			} Topic;
+
+			struct
+			{
 				std::string * Nick, * User, * Host, * Reciever, * Message;
 			} Message;
 
@@ -70,6 +75,7 @@ namespace tinyirc
 				std::string * AffectedNick;
 				bool SetMode;
 				IRCUserMode::Type Mode;
+				char ModeAsChar;
 			} UserMode;
 
 			struct
@@ -78,13 +84,14 @@ namespace tinyirc
 				std::string * Channel;
 				bool SetMode;
 				IRCChannelMode::Type Mode;
+				char ModeAsChar;
 				std::string * Param;
 			} ChannelMode;
 
 			struct
 			{
 				std::string * Nick, * User, * Host, * Channel, * NewTopic;
-			} Topic;
+			} TopicChanged;
 
 			struct
 			{
@@ -108,82 +115,87 @@ namespace tinyirc
 			switch(Type)
 			{
 				case IRCMessageType::MOTD:
-					Data.MOTD.Message = new std::string(*Source.Data.MOTD.Message);
+					Data.MOTD.Message = Copy(Source.Data.MOTD.Message);
 					break;
 
 				case IRCMessageType::NickChange:
-					Data.NickChange.Nick = new std::string(*Source.Data.NickChange.Nick);
-					Data.NickChange.User = new std::string(*Source.Data.NickChange.User);
-					Data.NickChange.Host = new std::string(*Source.Data.NickChange.Host);
-					Data.NickChange.NewNick = new std::string(*Source.Data.NickChange.NewNick);
+					Data.NickChange.Nick = Copy(Source.Data.NickChange.Nick);
+					Data.NickChange.User = Copy(Source.Data.NickChange.User);
+					Data.NickChange.Host = Copy(Source.Data.NickChange.Host);
+					Data.NickChange.NewNick = Copy(Source.Data.NickChange.NewNick);
 					break;
 
 				case IRCMessageType::UserList:
-					Data.UserList.Channel = new std::string(*Source.Data.UserList.Channel);
-					Data.UserList.Nicks = new std::vector<std::string>(*Source.Data.UserList.Nicks);
+					Data.UserList.Channel = Copy(Source.Data.UserList.Channel);
+					Data.UserList.Nicks = Copy(Source.Data.UserList.Nicks);
+					break;
+
+				case IRCMessageType::Topic:
+					Data.Topic.Channel = Copy(Source.Data.Topic.Channel);
+					Data.Topic.Topic = Copy(Source.Data.Topic.Topic);
 					break;
 
 				case IRCMessageType::Message:
 				case IRCMessageType::Notice:
-					Data.Message.Nick = new std::string(*Source.Data.Message.Nick);
-					Data.Message.User = new std::string(*Source.Data.Message.User);
-					Data.Message.Host = new std::string(*Source.Data.Message.Host);
-					Data.Message.Reciever = new std::string(*Source.Data.Message.Reciever);
-					Data.Message.Message = new std::string(*Source.Data.Message.Message);
+					Data.Message.Nick = Copy(Source.Data.Message.Nick);
+					Data.Message.User = Copy(Source.Data.Message.User);
+					Data.Message.Host = Copy(Source.Data.Message.Host);
+					Data.Message.Reciever = Copy(Source.Data.Message.Reciever);
+					Data.Message.Message = Copy(Source.Data.Message.Message);
 					break;
 
 				case IRCMessageType::Join:
-					Data.Join.Nick = new std::string(*Source.Data.Join.Nick);
-					Data.Join.User = new std::string(*Source.Data.Join.User);
-					Data.Join.Host = new std::string(*Source.Data.Join.Host);
-					Data.Join.Channel = new std::string(*Source.Data.Join.Channel);
+					Data.Join.Nick = Copy(Source.Data.Join.Nick);
+					Data.Join.User = Copy(Source.Data.Join.User);
+					Data.Join.Host = Copy(Source.Data.Join.Host);
+					Data.Join.Channel = Copy(Source.Data.Join.Channel);
 					break;
 
 				case IRCMessageType::Part:
-					Data.Part.Nick = new std::string(*Source.Data.Part.Nick);
-					Data.Part.User = new std::string(*Source.Data.Part.User);
-					Data.Part.Host = new std::string(*Source.Data.Part.Host);
-					Data.Part.Channel = new std::string(*Source.Data.Part.Channel);
-					Data.Part.Message = new std::string(*Source.Data.Part.Message);
+					Data.Part.Nick = Copy(Source.Data.Part.Nick);
+					Data.Part.User = Copy(Source.Data.Part.User);
+					Data.Part.Host = Copy(Source.Data.Part.Host);
+					Data.Part.Channel = Copy(Source.Data.Part.Channel);
+					Data.Part.Message = Copy(Source.Data.Part.Message);
 					break;
 
 				case IRCMessageType::Quit:
-					Data.Quit.Nick = new std::string(*Source.Data.Quit.Nick);
-					Data.Quit.User = new std::string(*Source.Data.Quit.User);
-					Data.Quit.Host = new std::string(*Source.Data.Quit.Host);
-					Data.Quit.Message = new std::string(*Source.Data.Quit.Message);
+					Data.Quit.Nick = Copy(Source.Data.Quit.Nick);
+					Data.Quit.User = Copy(Source.Data.Quit.User);
+					Data.Quit.Host = Copy(Source.Data.Quit.Host);
+					Data.Quit.Message = Copy(Source.Data.Quit.Message);	
 					break;
 
 				case IRCMessageType::UserMode:
-					Data.UserMode.SenderNick = new std::string(*Source.Data.UserMode.SenderNick);
-					Data.UserMode.SenderUser = new std::string(*Source.Data.UserMode.SenderUser);
-					Data.UserMode.SenderHost = new std::string(*Source.Data.UserMode.SenderHost);
-					Data.UserMode.AffectedNick = new std::string(*Source.Data.UserMode.AffectedNick);
+					Data.UserMode.SenderNick = Copy(Source.Data.UserMode.SenderNick);
+					Data.UserMode.SenderUser = Copy(Source.Data.UserMode.SenderUser);
+					Data.UserMode.SenderHost = Copy(Source.Data.UserMode.SenderHost);
+					Data.UserMode.AffectedNick = Copy(Source.Data.UserMode.AffectedNick);
 					break;
 
 				case IRCMessageType::ChannelMode:
-					Data.ChannelMode.SenderNick = new std::string(*Source.Data.ChannelMode.SenderNick);
-					Data.ChannelMode.SenderUser = new std::string(*Source.Data.ChannelMode.SenderUser);
-					Data.ChannelMode.SenderHost = new std::string(*Source.Data.ChannelMode.SenderHost);
-					Data.ChannelMode.Channel = new std::string(*Source.Data.ChannelMode.Channel);
-					Data.ChannelMode.Param = new std::string(*Source.Data.ChannelMode.Param);
+					Data.ChannelMode.SenderNick = Copy(Source.Data.ChannelMode.SenderNick);
+					Data.ChannelMode.SenderUser = Copy(Source.Data.ChannelMode.SenderUser);
+					Data.ChannelMode.SenderHost = Copy(Source.Data.ChannelMode.SenderHost);
+					Data.ChannelMode.Channel = Copy(Source.Data.ChannelMode.Channel);
+					Data.ChannelMode.Param = Copy(Source.Data.ChannelMode.Param);
 					break;
 
-				case IRCMessageType::Topic:
-					Data.Topic.Nick = new std::string(*Source.Data.Topic.Nick);
-					Data.Topic.User = new std::string(*Source.Data.Topic.User);
-					Data.Topic.Host = new std::string(*Source.Data.Topic.Host);
-					Data.Topic.Channel = new std::string(*Source.Data.Topic.Channel);
-					Data.Topic.NewTopic = new std::string(*Source.Data.Topic.NewTopic);
+				case IRCMessageType::TopicChanged:
+					Data.TopicChanged.Nick = Copy(Source.Data.TopicChanged.Nick);
+					Data.TopicChanged.User = Copy(Source.Data.TopicChanged.User);
+					Data.TopicChanged.Host = Copy(Source.Data.TopicChanged.Host);
+					Data.TopicChanged.Channel = Copy(Source.Data.TopicChanged.Channel);
+					Data.TopicChanged.NewTopic = Copy(Source.Data.TopicChanged.NewTopic);
 					break;
 
 				case IRCMessageType::Kick:
-					Data.Kick.Nick = new std::string(*Source.Data.Kick.Nick);
-					Data.Kick.User = new std::string(*Source.Data.Kick.User);
-					Data.Kick.Host = new std::string(*Source.Data.Kick.Host);
-					Data.Kick.Channel = new std::string(*Source.Data.Kick.Channel);
-					Data.Kick.Victim = new std::string(*Source.Data.Kick.Victim);
-					Data.Kick.Reason = new std::string(*Source.Data.Kick.Reason);
+					Data.Kick.Nick = Copy(Source.Data.Kick.Nick);
+					Data.Kick.User = Copy(Source.Data.Kick.User);
+					Data.Kick.Host = Copy(Source.Data.Kick.Host);
+					Data.Kick.Channel = Copy(Source.Data.Kick.Channel);
+					Data.Kick.Victim = Copy(Source.Data.Kick.Victim);
+					Data.Kick.Reason = Copy(Source.Data.Kick.Reason);
 					break;
 
 				default:
@@ -209,6 +221,11 @@ namespace tinyirc
 				case IRCMessageType::UserList:
 					Delete(Data.UserList.Channel);
 					Delete(Data.UserList.Nicks);
+					break;
+
+				case IRCMessageType::Topic:
+					Delete(Data.Topic.Channel);
+					Delete(Data.Topic.Topic);
 					break;
 
 				case IRCMessageType::Message:
@@ -257,12 +274,12 @@ namespace tinyirc
 					Delete(Data.ChannelMode.Param);
 					break;
 
-				case IRCMessageType::Topic:
-					Delete(Data.Topic.Nick);
-					Delete(Data.Topic.User);
-					Delete(Data.Topic.Host);
-					Delete(Data.Topic.Channel);
-					Delete(Data.Topic.NewTopic);
+				case IRCMessageType::TopicChanged:
+					Delete(Data.TopicChanged.Nick);
+					Delete(Data.TopicChanged.User);
+					Delete(Data.TopicChanged.Host);
+					Delete(Data.TopicChanged.Channel);
+					Delete(Data.TopicChanged.NewTopic);
 					break;
 
 				case IRCMessageType::Kick:
@@ -287,6 +304,19 @@ namespace tinyirc
 			{
 				delete Ptr;
 				Ptr = NULL;
+			}
+		}
+
+		template<class Type>
+		Type * Copy(Type * Source)
+		{
+			if(Source != NULL)
+			{
+				return new Type(*Source);
+			}
+			else
+			{
+				return NULL;
 			}
 		}
 	};
