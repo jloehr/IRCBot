@@ -11,7 +11,7 @@ CTinyBot::CTinyBot(const std::string Botname, const StringVector & Plugins)
 	:m_Botname(Botname)
 	,m_ControlPanel(this)
 {
-
+	LoadPlugins(Plugins);
 }
 
 CTinyBot::~CTinyBot()
