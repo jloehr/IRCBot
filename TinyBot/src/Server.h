@@ -1,6 +1,8 @@
 #pragma once
 
 #include <map>
+#include <utility>
+#include <vector>
 #include <string>
 #include <string.h>
 #include <strings.h> 
@@ -17,11 +19,13 @@
 #include "types.h"
 #include "Output.h"
 #include "Channel.h"
+#include "PlugInInterface.h"
+#include "PlugIn.h"
 
 class CServer
 {
 public:
-	CServer(const std::string * Botname, const std::string * ServerAdress, const std::string * ServerPort, StringPairVector * Channels);
+	CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const StringPairVector & Channels, const PluginVector & Plugins);
 	~CServer();
 
 	void Init();
@@ -40,6 +44,7 @@ private:
 	const std::string m_ServerAdress;
 	const std::string m_ServerPort;
 
+	PluginPairVector m_Plugins;
 	ChannelMap m_Channles; 
 	tinyirc::CParser m_IRCParser;
 	ev::timer m_ReconnectTimer;
@@ -49,6 +54,11 @@ private:
 	int m_Socketfd;
 	bool m_Connected;
 
+	void GetPlugInInstances(const PluginVector & Plugins);
+	void InstanciateChannels(const StringPairVector & Channels);
+
+	void DeleteChannels();
+	void FreePlugins();
 
 	bool CreateSocket();
 	bool Connect();

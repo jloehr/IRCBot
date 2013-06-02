@@ -38,7 +38,7 @@ CTinyBot * CTinyBotFactory::Build()
 {
 	ParseArguments();
 
-	m_Product = new CTinyBot(m_Botname);
+	m_Product = new CTinyBot(m_Botname, m_PluginPathVector);
 
 	SetupServers();
 
@@ -50,7 +50,7 @@ void CTinyBotFactory::SetupServers()
 {
 	for(StringPairStringVectorPairVector::iterator it = m_ServerVector.begin(); it != m_ServerVector.end(); ++it)
 	{
-		m_Product->Connect((*it)->first, (*it)->second);
+		m_Product->Connect(*((*it)->first), *((*it)->second));
 		CleanUp(*it);
 		delete (*it);
 	}
@@ -72,7 +72,8 @@ void CTinyBotFactory::ParseArguments()
 	//	server:port #channel,pass #channel,pass server2 #channel #channel,pass
 	//				bsp.: irc.quakenet.org #foo,bar #help foo.randomirc.org:12345 #lobby
 	//				joins channel foo with pass bar and channel help on irc.quakenet.org and also channel lobby on foo.randomirc.org with port
-
+	// -l PathToPlugin1 -l PathtoPlugin2
+	//				Load the Library at the given path as Plugin
 
 
 	for (int i = 1; i < m_argc; ++i)
@@ -118,6 +119,9 @@ void CTinyBotFactory::ParseArguments()
 					{
 					case 'n':
 						m_Botname = m_argv[++i];
+						break;
+					case 'l':
+						m_PluginPathVector.push_back(std::string(m_argv[++i]));
 						break;
 					}
 					break;

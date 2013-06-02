@@ -5,7 +5,7 @@ SOURCEDIR = ./src/
 
 CC=g++
 CPPFLAGS=-c -Wall -std=c++11 -I $(INCDIR) -ggdb
-LDFLAGS= -lev -L $(LIBDIR) -ltinyirc
+LDFLAGS= -rdynamic -ldl -lev -L $(LIBDIR) -ltinyirc
 
 SOURCES=$(wildcard $(SOURCEDIR)*.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)

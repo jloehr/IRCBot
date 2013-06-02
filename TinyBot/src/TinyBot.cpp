@@ -7,7 +7,7 @@
 //											//
 //------------------------------------------//
 
-CTinyBot::CTinyBot(const std::string Botname)
+CTinyBot::CTinyBot(const std::string Botname, const StringVector & Plugins)
 	:m_Botname(Botname)
 	,m_ControlPanel(this)
 {
@@ -22,7 +22,39 @@ CTinyBot::~CTinyBot()
 	}
 	
 	m_Servers.clear();
+
+	for(PluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+	{
+		delete (*it);
+	}
+
+	m_Plugins.clear();
 }
+	
+
+//------------------------------------------//
+//											//
+//				Load Plugin					//
+//											//
+//------------------------------------------//
+
+void CTinyBot::LoadPlugins(const StringVector & Plugins)
+{
+	for(StringVector::const_iterator it = Plugins.begin(); it != Plugins.end(); ++it)
+	{
+		CPlugIn * Tmp = new CPlugIn(*it);
+
+		if(Tmp->Load())
+		{
+				m_Plugins.push_back(Tmp);
+		}
+		else
+		{
+			delete Tmp;
+		}
+	}
+}
+
 
 //------------------------------------------//
 //											//
@@ -106,7 +138,7 @@ void CTinyBot::StopWatchers()
 //											//
 //------------------------------------------//
 
-void CTinyBot::Connect(StringPair * Server, StringPairVector * Channels)
+void CTinyBot::Connect(const StringPair & Server, const StringPairVector & Channels)
 {
-	m_Servers.push_back(new CServer(&m_Botname, Server->first, Server->second, Channels));
+	m_Servers.push_back(new CServer(m_Botname, *(Server.first), *(Server.second), Channels, m_Plugins));
 }

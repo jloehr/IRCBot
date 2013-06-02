@@ -25,6 +25,7 @@ private:
 	std::string m_Botname;
 	StringPairStringVectorPairVector m_ServerVector;
 	StringPairVector * m_ChannelVector;
+	StringVector m_PluginPathVector;
 
 	CTinyBot * m_Product;
 

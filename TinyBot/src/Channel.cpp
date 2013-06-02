@@ -7,16 +7,19 @@
 //											//
 //------------------------------------------//
 
-CChannel::CChannel(const std::string * Name, const std::string * Pass, CServer * ServerConnection)
-	:m_Name(*Name), m_Pass(*Pass)
-	,m_ServerConnection(*ServerConnection), m_IRCParser(ServerConnection->GetIRCParser())
+CChannel::CChannel(const std::string & Name, const std::string & Pass, const PluginPairVector & Plugins, CServer & ServerConnection)
+	:m_Name(Name), m_Pass(Pass)
+	,m_ServerConnection(ServerConnection), m_IRCParser(ServerConnection.GetIRCParser())
 {
-
+	for(PluginPairVector::const_iterator it = Plugins.begin(); it != Plugins.end(); ++it)
+	{
+		m_Plugins.push_back(&(it->first->GetChannelInterface(m_Name)));
+	}
 }
 
 CChannel::~CChannel()
 {
-
+	m_Plugins.clear();
 }
 
 

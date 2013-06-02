@@ -8,22 +8,50 @@ const ev_tstamp	CServer::RECONNECT_INTERVALL = 60.;
 //											//
 //------------------------------------------//
 
-CServer::CServer(const std::string * Botname, const std::string * ServerAdress, const std::string * ServerPort, StringPairVector * Channels)
-	:m_Botname(*Botname), m_ServerAdress(*ServerAdress), m_ServerPort(*ServerPort)
+CServer::CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const StringPairVector & Channels, const PluginVector & Plugins)
+	:m_Botname(Botname), m_ServerAdress(ServerAdress), m_ServerPort(ServerPort)
 	,m_Socketfd(-1), m_Connected(false)
 {
-	for(StringPairVector::iterator it = Channels->begin(); it != Channels->end(); ++it)
-	{
-		m_Channles.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*it)->first, (*it)->second, this)));
-	}
-
 	m_ReconnectTimer.set<CServer, &CServer::timer_cb_TryReconnect>(this);
 	m_SocketWatcher.set<CServer, &CServer::io_cb_SocketRead>(this);
+
+	GetPlugInInstances(Plugins);
+
+	InstanciateChannels(Channels);
 }
 
 CServer::~CServer()
 {
+	DeleteChannels();
+
+	FreePlugins();
+
 	Close();
+}
+
+void CServer::GetPlugInInstances(const PluginVector & Plugins)
+{
+	for(PluginVector::const_iterator it = Plugins.begin(); it != Plugins.end(); ++it)
+	{
+		IServerInterface * Tmp = (*it)->CreateInterface(m_ServerAdress, m_Botname);
+		if(Tmp != NULL)
+		{
+			m_Plugins.push_back(PluginPair(Tmp, (*it)));
+		}
+	}
+}
+
+void CServer::InstanciateChannels(const StringPairVector & Channels)
+{
+	for(StringPairVector::const_iterator it = Channels.begin(); it != Channels.end(); ++it)
+	{
+		m_Channles.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*(*it)->first), (*(*it)->second), m_Plugins, *this)));
+	}
+
+}
+
+void CServer::DeleteChannels()
+{
 
 	for(ChannelMap::iterator it = m_Channles.begin(); it != m_Channles.end(); ++it)
 	{
@@ -31,6 +59,16 @@ CServer::~CServer()
 	}
 
 	m_Channles.clear();
+}
+
+void CServer::FreePlugins()
+{
+	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+	{
+		(it->second)->FreeInstance(it->first);
+	}
+
+	m_Plugins.clear();
 }
 
 //------------------------------------------//
