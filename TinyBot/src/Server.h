@@ -45,7 +45,7 @@ private:
 	const std::string m_ServerPort;
 
 	PluginPairVector m_Plugins;
-	ChannelMap m_Channles; 
+	ChannelMap m_Channels; 
 	tinyirc::CParser m_IRCParser;
 	ev::timer m_ReconnectTimer;
 	ev::io m_SocketWatcher;
@@ -75,6 +75,22 @@ private:
 	void io_cb_SocketRead(ev::io &w, int revents);
 
 	void IssueMessages(const tinyirc::IRCMessage & Message);
+	void ProcessWelcome(const tinyirc::IRCMessage & Message);
+	void ProcessMOTD(const tinyirc::IRCMessage & Message);
+	void ProcessUserMode(const tinyirc::IRCMessage & Message);
+
+	void ProcessPrvtMessage(const tinyirc::IRCMessage & Message);
+	void ProcessNotice(const tinyirc::IRCMessage & Message);
+
+	void ProcessUserList(const tinyirc::IRCMessage & Message);
+	void ProcessTopic(const tinyirc::IRCMessage & Message);
+	void ProcessNick(const tinyirc::IRCMessage & Message);
+	void ProcessJoin(const tinyirc::IRCMessage & Message);
+	void ProcessPart(const tinyirc::IRCMessage & Message);
+	void ProcessQuit(const tinyirc::IRCMessage & Message);
+	void ProcessChannelMode(const tinyirc::IRCMessage & Message);
+	void ProcessTopicChanged(const tinyirc::IRCMessage & Message);
+	void ProcessKick(const tinyirc::IRCMessage & Message);
 };
 
 inline

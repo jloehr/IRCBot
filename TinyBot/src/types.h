@@ -2,10 +2,12 @@
 
 #include <utility> 
 #include <string> 
+#include <set>
 #include <vector>
 #include <map>
 
 typedef std::vector<std::string> StringVector;
+typedef std::set<std::string> StringSet;
 typedef std::pair<std::string *, std::string *> StringPair;
 typedef std::vector<StringPair *> StringPairVector;
 typedef std::pair<StringPair *, StringPairVector *> StringPairStringVectorPair;

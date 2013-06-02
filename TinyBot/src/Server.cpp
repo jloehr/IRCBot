@@ -45,7 +45,7 @@ void CServer::InstanciateChannels(const StringPairVector & Channels)
 {
 	for(StringPairVector::const_iterator it = Channels.begin(); it != Channels.end(); ++it)
 	{
-		m_Channles.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*(*it)->first), (*(*it)->second), m_Plugins, *this)));
+		m_Channels.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*(*it)->first), (*(*it)->second), m_Plugins, *this)));
 	}
 
 }
@@ -53,12 +53,12 @@ void CServer::InstanciateChannels(const StringPairVector & Channels)
 void CServer::DeleteChannels()
 {
 
-	for(ChannelMap::iterator it = m_Channles.begin(); it != m_Channles.end(); ++it)
+	for(ChannelMap::iterator it = m_Channels.begin(); it != m_Channels.end(); ++it)
 	{
 		delete it->second;
 	}
 
-	m_Channles.clear();
+	m_Channels.clear();
 }
 
 void CServer::FreePlugins()
@@ -204,6 +204,11 @@ void CServer::Close()
 	close(m_Socketfd);
 	m_Socketfd = -1;
 	m_Connected = false;
+
+	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+	{
+		(it->first)->OnDisconnect();
+	}
 }
 
 void CServer::Reconnect()
@@ -226,10 +231,16 @@ void CServer::Disconnect()
 	if(m_Connected)
 	{
 		//Send Disconnect
-		std::string ExitMessage("Bot is shutting down!");
 		std::string Package;
+
+		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+		{
+			(it->first)->OnShutdown(Package);
+		}
+
 		try
 		{
+			std::string ExitMessage("Bot is shutting down!");
 			m_IRCParser.GetClosingPackage(ExitMessage, Package);
 		}
 		catch(tinyirc::IRCException & exception)
@@ -392,16 +403,242 @@ void CServer::io_cb_SocketRead(ev::io &w, int revents)
 	}
 
 }
+
+//------------------------------------------//
+//											//
+//			  Issue Messages				//
+//											//
+//------------------------------------------//
+
 	
 void CServer::IssueMessages(const tinyirc::IRCMessage & Message)
 {
 	switch(Message.Type)
 	{
 		case tinyirc::IRCMessageType::Welcome:
-			JoinChannels();
+			ProcessWelcome(Message);
 			break;
+		case tinyirc::IRCMessageType::MOTD:
+			ProcessMOTD(Message);
+			break;
+		case tinyirc::IRCMessageType::UserMode:
+			ProcessUserMode(Message);
+			break;
+
+		case tinyirc::IRCMessageType::Message:
+			ProcessPrvtMessage(Message);
+			break;
+		case tinyirc::IRCMessageType::Notice:
+			ProcessNotice(Message);
+			break;
+
+
+		case tinyirc::IRCMessageType::UserList:
+			ProcessUserList(Message);
+			break;
+		case tinyirc::IRCMessageType::Topic:
+			ProcessTopic(Message);
+			break;
+		case tinyirc::IRCMessageType::NickChange:
+			ProcessNick(Message);
+			break;
+		case tinyirc::IRCMessageType::Join:
+			ProcessJoin(Message);
+			break;
+		case tinyirc::IRCMessageType::Part:
+			ProcessPart(Message);
+			break;
+		case tinyirc::IRCMessageType::Quit:
+			ProcessQuit(Message);
+			break;
+		case tinyirc::IRCMessageType::ChannelMode:
+			ProcessChannelMode(Message);
+			break;
+		case tinyirc::IRCMessageType::TopicChanged:
+			ProcessTopicChanged(Message);
+			break;
+		case tinyirc::IRCMessageType::Kick:
+			ProcessKick(Message);
+			break;
+
 	}
 }
+
+void CServer::ProcessWelcome(const tinyirc::IRCMessage & Message)
+{
+	JoinChannels();
+
+	std::string Response;
+
+	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+	{
+		(it->first)->OnWelcome(*Message.Data.Welcome.Message, Response);
+	}
+
+	Send(Response);
+}
+
+void CServer::ProcessMOTD(const tinyirc::IRCMessage & Message)
+{
+	std::string Response;
+
+	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+	{
+		(it->first)->OnMOTD(*Message.Data.MOTD.Message, Response);
+	}
+
+	Send(Response);
+
+}
+
+void CServer::ProcessUserMode(const tinyirc::IRCMessage & Message)
+{
+	std::string Response;
+
+	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+	{
+		(it->first)->OnUserMode(*Message.Data.UserMode.SenderNick, *Message.Data.UserMode.SenderUser, *Message.Data.UserMode.SenderHost, Message.Data.UserMode.ModeAsChar,  Message.Data.UserMode.SetMode, Response);
+	}
+
+	Send(Response);
+}
+
+void CServer::ProcessPrvtMessage(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.Message.Reciever);
+
+	if(Result == m_Channels.end())
+	{
+		std::string Response;
+
+		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+		{
+			(it->first)->OnPrvtMessage(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, Response);
+		}
+
+		Send(Response);
+	}
+	else
+	{
+		Result->second->OnMessage(Message);
+	}
+
+}
+
+void CServer::ProcessNotice(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.Message.Reciever);
+
+	if(Result == m_Channels.end())
+	{
+		std::string Response;
+
+		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
+		{
+			(it->first)->OnNotice(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, Response);
+		}
+
+		Send(Response);
+	}
+	else
+	{
+		Result->second->OnNotice(Message);
+	}
+}
+
+void CServer::ProcessUserList(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.UserList.Channel);
+
+	if(Result != m_Channels.end())
+	{
+		Result->second->OnUserList(Message);
+	}
+}
+
+void CServer::ProcessTopic(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.Topic.Channel);
+
+	if(Result != m_Channels.end())
+	{
+		Result->second->OnTopic(Message);
+	}
+}
+
+void CServer::ProcessNick(const tinyirc::IRCMessage & Message)
+{
+	for(ChannelMap::iterator it = m_Channels.begin(); it != m_Channels.end(); ++it)
+	{
+		if(it->second->UserIsIn(*Message.Data.NickChange.Nick))
+		{
+			it->second->OnNickChange(Message);
+		}
+	}
+}
+
+void CServer::ProcessJoin(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.Join.Channel);
+
+	if(Result != m_Channels.end())
+	{
+		Result->second->OnJoin(Message);
+	}
+}
+
+void CServer::ProcessPart(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.Part.Channel);
+
+	if(Result != m_Channels.end())
+	{
+		Result->second->OnPart(Message);
+	}
+}
+
+void CServer::ProcessQuit(const tinyirc::IRCMessage & Message)
+{	
+	for(ChannelMap::iterator it = m_Channels.begin(); it != m_Channels.end(); ++it)
+	{
+		if(it->second->UserIsIn(*Message.Data.Quit.Nick))
+		{
+			it->second->OnQuit(Message);
+		}
+	}
+}
+
+void CServer::ProcessChannelMode(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.ChannelMode.Channel);
+
+	if(Result != m_Channels.end())
+	{
+		Result->second->OnChannelMode(Message);
+	}
+}
+
+void CServer::ProcessTopicChanged(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.TopicChanged.Channel);
+
+	if(Result != m_Channels.end())
+	{
+		Result->second->OnChangedTopic(Message);
+	}
+}
+
+void CServer::ProcessKick(const tinyirc::IRCMessage & Message)
+{
+	ChannelMap::iterator Result = m_Channels.find(*Message.Data.Kick.Channel);
+
+	if(Result != m_Channels.end())
+	{
+		Result->second->OnKick(Message);
+	}
+}
+
+
 
 //------------------------------------------//
 //											//
@@ -411,16 +648,15 @@ void CServer::IssueMessages(const tinyirc::IRCMessage & Message)
 
 void CServer::JoinChannels()
 {
-	for(ChannelMap::iterator it = m_Channles.begin(); it != m_Channles.end(); ++it)
+	for(ChannelMap::iterator it = m_Channels.begin(); it != m_Channels.end(); ++it)
 	{
 		it->second->Join();
 	}
-
 }
 
 void CServer::ResetChannels()
 {
-	for(ChannelMap::iterator it = m_Channles.begin(); it != m_Channles.end(); ++it)
+	for(ChannelMap::iterator it = m_Channels.begin(); it != m_Channels.end(); ++it)
 	{
 		it->second->Reset();
 	}
