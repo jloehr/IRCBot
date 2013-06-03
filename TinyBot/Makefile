@@ -5,14 +5,14 @@ SOURCEDIR = ./src/
 
 CC=g++
 CPPFLAGS=-c -Wall -std=c++11 -I $(INCDIR) -ggdb
-LDFLAGS= -rdynamic -ldl -lev -L $(LIBDIR) -ltinyirc
+LDFLAGS= -ldl -lev -L $(LIBDIR) -ltinyirc
 
 SOURCES=$(wildcard $(SOURCEDIR)*.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=$(BUILDDIR)tinybot
 
-all: getlibraries $(EXECUTABLE)
-clean: cleanup Makefile.dep getlibraries $(EXECUTABLE) 
+all: $(EXECUTABLE)
+clean: cleanup Makefile.dep $(EXECUTABLE) 
 
 # dependencies collected with cc -MM
 -include Makefile.dep
@@ -24,7 +24,7 @@ Makefile.dep	: $(SOURCES)
 	$(CC) $(CPPFLAGS) -c $< -o $@
 
 # Link
-$(EXECUTABLE): $(OBJECTS) 
+$(EXECUTABLE): getlibraries $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
 #clean
