@@ -7,9 +7,9 @@
 //											//
 //------------------------------------------//
 
-CChannel::CChannel(const std::string & Name, const std::string & Pass, const PluginPairVector & Plugins, CServer & ServerConnection)
+CChannel::CChannel(const std::string & Name, const std::string & Pass, const PluginPairVector & Plugins, CServer & ServerConnection, CResponseWrapper & ResponseWrapper)
 	:m_Name(Name), m_Pass(Pass)
-	,m_ServerConnection(ServerConnection), m_IRCParser(ServerConnection.GetIRCParser())
+	,m_ServerConnection(ServerConnection), m_IRCParser(ServerConnection.GetIRCParser()), m_ResponseInterface(ResponseWrapper)
 {
 	for(PluginPairVector::const_iterator it = Plugins.begin(); it != Plugins.end(); ++it)
 	{
@@ -76,43 +76,51 @@ void CChannel::Join()
 
 void CChannel::OnUserList(const tinyirc::IRCMessage & Message)
 {
-
 	StringVector & Nicks = (*Message.Data.UserList.Nicks);
 
 	m_NickList = StringSet(Nicks.begin(), Nicks.end());
 
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnUserList(Nicks, Response);
+		(*it)->OnUserList(Nicks, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnTopic(const tinyirc::IRCMessage & Message)
 {
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnTopic(*Message.Data.Topic.Topic, Response);
+		(*it)->OnTopic(*Message.Data.Topic.Topic, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnChannelMode(const tinyirc::IRCMessage & Message)
 {
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnChannelMode(*Message.Data.ChannelMode.SenderNick, *Message.Data.ChannelMode.SenderUser, *Message.Data.ChannelMode.SenderHost, Message.Data.ChannelMode.ModeAsChar,  Message.Data.ChannelMode.SetMode,  *Message.Data.ChannelMode.Param, Response);
+		(*it)->OnChannelMode(*Message.Data.ChannelMode.SenderNick, *Message.Data.ChannelMode.SenderUser, *Message.Data.ChannelMode.SenderHost, Message.Data.ChannelMode.ModeAsChar,  Message.Data.ChannelMode.SetMode,  *Message.Data.ChannelMode.Param, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 
@@ -120,57 +128,68 @@ void CChannel::OnJoin(const tinyirc::IRCMessage & Message)
 {
 	m_NickList.insert(*Message.Data.Join.Nick);
 
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnJoin(*Message.Data.Join.Nick, *Message.Data.Join.User, *Message.Data.Join.Host, Response);
+		(*it)->OnJoin(*Message.Data.Join.Nick, *Message.Data.Join.User, *Message.Data.Join.Host, m_ResponseInterface);
 	}
-
-	m_ServerConnection.Send(Response);
-
+	
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnPart(const tinyirc::IRCMessage & Message)
 {
 	m_NickList.erase(*Message.Data.Join.Nick);
 
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnPart(*Message.Data.Part.Nick, *Message.Data.Part.User, *Message.Data.Part.Host, *Message.Data.Part.Message, Response);
+		(*it)->OnPart(*Message.Data.Part.Nick, *Message.Data.Part.User, *Message.Data.Part.Host, *Message.Data.Part.Message, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnQuit(const tinyirc::IRCMessage & Message)
 {
 	m_NickList.erase(*Message.Data.Join.Nick);
 
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnQuit(*Message.Data.Quit.Nick, *Message.Data.Quit.User, *Message.Data.Quit.Host, *Message.Data.Quit.Message, Response);
+		(*it)->OnQuit(*Message.Data.Quit.Nick, *Message.Data.Quit.User, *Message.Data.Quit.Host, *Message.Data.Quit.Message, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnKick(const tinyirc::IRCMessage & Message)
 {
 	m_NickList.erase(*Message.Data.Join.Nick);
 
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnKick(*Message.Data.Kick.Nick, *Message.Data.Kick.User, *Message.Data.Kick.Host, *Message.Data.Kick.Victim, *Message.Data.Kick.Reason, Response);
+		(*it)->OnKick(*Message.Data.Kick.Nick, *Message.Data.Kick.User, *Message.Data.Kick.Host, *Message.Data.Kick.Victim, *Message.Data.Kick.Reason, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnNickChange(const tinyirc::IRCMessage & Message)
@@ -178,48 +197,60 @@ void CChannel::OnNickChange(const tinyirc::IRCMessage & Message)
 	m_NickList.erase(*Message.Data.NickChange.Nick);
 	m_NickList.insert(*Message.Data.NickChange.NewNick);
 
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnNickChange(*Message.Data.NickChange.Nick, *Message.Data.NickChange.User, *Message.Data.NickChange.Host, *Message.Data.NickChange.NewNick, Response);
+		(*it)->OnNickChange(*Message.Data.NickChange.Nick, *Message.Data.NickChange.User, *Message.Data.NickChange.Host, *Message.Data.NickChange.NewNick, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnChangedTopic(const tinyirc::IRCMessage & Message)
 {
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnChangedTopic(*Message.Data.TopicChanged.Nick, *Message.Data.TopicChanged.User, *Message.Data.TopicChanged.Host, *Message.Data.TopicChanged.NewTopic, Response);
+		(*it)->OnChangedTopic(*Message.Data.TopicChanged.Nick, *Message.Data.TopicChanged.User, *Message.Data.TopicChanged.Host, *Message.Data.TopicChanged.NewTopic, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnNotice(const tinyirc::IRCMessage & Message)
 {
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnNotice(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, Response);
+		(*it)->OnNotice(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CChannel::OnMessage(const tinyirc::IRCMessage & Message)
 {
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(ChannelPluginVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(*it)->OnMessage(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, Response);
+		(*it)->OnMessage(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, m_ResponseInterface);
 	}
 
-	m_ServerConnection.Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		m_ServerConnection.Send(m_ResponseInterface.GetResponse());
+	}
 }

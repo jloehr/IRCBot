@@ -8,6 +8,7 @@
 #include "Output.h"
 #include "PlugInInterface.h"
 #include "PlugIn.h"
+#include "ResponseWrapper.h"
 #include "types.h"
 
 class CServer;
@@ -15,7 +16,7 @@ class CServer;
 class CChannel
 {
 public:
-	CChannel(const std::string & Name, const std::string & Pass, const PluginPairVector & Plugins, CServer & ServerConnection);
+	CChannel(const std::string & Name, const std::string & Pass, const PluginPairVector & Plugins, CServer & ServerConnection, CResponseWrapper & ResponseWrapper);
 	~CChannel();
 
 	void Reset();
@@ -44,6 +45,7 @@ private:
 
 	CServer & m_ServerConnection;
 	tinyirc::CParser & m_IRCParser;
+	CResponseWrapper & m_ResponseInterface;
 
 	ChannelPluginVector m_Plugins;
 	StringSet m_NickList;

@@ -21,6 +21,7 @@
 #include "Channel.h"
 #include "PlugInInterface.h"
 #include "PlugIn.h"
+#include "ResponseWrapper.h"
 
 class CServer
 {
@@ -47,6 +48,7 @@ private:
 	PluginPairVector m_Plugins;
 	ChannelMap m_Channels; 
 	tinyirc::CParser m_IRCParser;
+	CResponseWrapper m_ResponseInterface;
 	ev::timer m_ReconnectTimer;
 	ev::io m_SocketWatcher;
 	char m_ReadBuffer[READ_BUFFER_SIZE];

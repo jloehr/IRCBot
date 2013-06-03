@@ -10,6 +10,7 @@ const ev_tstamp	CServer::RECONNECT_INTERVALL = 60.;
 
 CServer::CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const StringPairVector & Channels, const PluginVector & Plugins)
 	:m_Botname(Botname), m_ServerAdress(ServerAdress), m_ServerPort(ServerPort)
+	,m_ResponseInterface(m_IRCParser)
 	,m_Socketfd(-1), m_Connected(false)
 {
 	m_ReconnectTimer.set<CServer, &CServer::timer_cb_TryReconnect>(this);
@@ -45,7 +46,7 @@ void CServer::InstanciateChannels(const StringPairVector & Channels)
 {
 	for(StringPairVector::const_iterator it = Channels.begin(); it != Channels.end(); ++it)
 	{
-		m_Channels.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*(*it)->first), (*(*it)->second), m_Plugins, *this)));
+		m_Channels.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*(*it)->first), (*(*it)->second), m_Plugins, *this, m_ResponseInterface)));
 	}
 
 }
@@ -231,12 +232,19 @@ void CServer::Disconnect()
 	if(m_Connected)
 	{
 		//Send Disconnect
-		std::string Package;
+		m_ResponseInterface.Clear();
 
 		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 		{
-			(it->first)->OnShutdown(Package);
+			(it->first)->OnShutdown(m_ResponseInterface);
 		}
+
+		if(m_ResponseInterface.Filled())
+		{
+			Send(m_ResponseInterface.GetResponse());
+		}
+
+		std::string Package;
 
 		try
 		{
@@ -468,39 +476,46 @@ void CServer::ProcessWelcome(const tinyirc::IRCMessage & Message)
 {
 	JoinChannels();
 
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(it->first)->OnWelcome(*Message.Data.Welcome.Message, Response);
+		(it->first)->OnWelcome(*Message.Data.Welcome.Message, m_ResponseInterface);
 	}
 
-	Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CServer::ProcessMOTD(const tinyirc::IRCMessage & Message)
 {
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(it->first)->OnMOTD(*Message.Data.MOTD.Message, Response);
+		(it->first)->OnMOTD(*Message.Data.MOTD.Message, m_ResponseInterface);
 	}
 
-	Send(Response);
-
+	if(m_ResponseInterface.Filled())
+	{
+		Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CServer::ProcessUserMode(const tinyirc::IRCMessage & Message)
 {
-	std::string Response;
+	m_ResponseInterface.Clear();
 
 	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(it->first)->OnUserMode(*Message.Data.UserMode.SenderNick, *Message.Data.UserMode.SenderUser, *Message.Data.UserMode.SenderHost, Message.Data.UserMode.ModeAsChar,  Message.Data.UserMode.SetMode, Response);
+		(it->first)->OnUserMode(*Message.Data.UserMode.SenderNick, *Message.Data.UserMode.SenderUser, *Message.Data.UserMode.SenderHost, Message.Data.UserMode.ModeAsChar,  Message.Data.UserMode.SetMode, m_ResponseInterface);
 	}
-
-	Send(Response);
+	if(m_ResponseInterface.Filled())
+	{
+		Send(m_ResponseInterface.GetResponse());
+	}
 }
 
 void CServer::ProcessPrvtMessage(const tinyirc::IRCMessage & Message)
@@ -509,14 +524,17 @@ void CServer::ProcessPrvtMessage(const tinyirc::IRCMessage & Message)
 
 	if(Result == m_Channels.end())
 	{
-		std::string Response;
+		m_ResponseInterface.Clear();
 
 		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 		{
-			(it->first)->OnPrvtMessage(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, Response);
+			(it->first)->OnPrvtMessage(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, m_ResponseInterface);
 		}
 
-		Send(Response);
+		if(m_ResponseInterface.Filled())
+		{
+			Send(m_ResponseInterface.GetResponse());
+		}
 	}
 	else
 	{
@@ -531,14 +549,17 @@ void CServer::ProcessNotice(const tinyirc::IRCMessage & Message)
 
 	if(Result == m_Channels.end())
 	{
-		std::string Response;
+		m_ResponseInterface.Clear();
 
 		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 		{
-			(it->first)->OnNotice(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, Response);
+			(it->first)->OnNotice(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, m_ResponseInterface);
 		}
 
-		Send(Response);
+		if(m_ResponseInterface.Filled())
+		{
+			Send(m_ResponseInterface.GetResponse());
+		}
 	}
 	else
 	{
