@@ -360,7 +360,7 @@ namespace tinyirc
 			Message.Data.Part.User = new std::string(m_PrefixUser);
 			Message.Data.Part.Host = new std::string(m_PrefixHost);
 			Message.Data.Part.Channel = new std::string(m_Params[0]);
-			Message.Data.Part.Message = new std::string(m_Params[m_Params.size() - 1]);
+			Message.Data.Part.Message = (m_Params.size() > 1) ? new std::string(m_Params[m_Params.size() - 1]) : new std::string("");	
 			m_MessageBuffer.push_back(Message);
 		}
 	}
@@ -373,7 +373,7 @@ namespace tinyirc
 		Message.Data.Quit.Nick = new std::string(m_PrefixNick);
 		Message.Data.Quit.User = new std::string(m_PrefixUser);
 		Message.Data.Quit.Host = new std::string(m_PrefixHost);
-		Message.Data.Quit.Message = new std::string(m_Params[m_Params.size() - 1]);
+		Message.Data.Quit.Message = (m_Params.size() > 1) ? new std::string(m_Params[m_Params.size() - 1]) : new std::string("");
 		
 		m_MessageBuffer.push_back(Message);
 		
@@ -514,33 +514,38 @@ namespace tinyirc
 	// --- Topic Changed --- //
 	void CParser::ProcessTopicChanged()
 	{
-		IRCMessage Message;
+		if(m_Params.size() > 1)
+		{
+			IRCMessage Message;
 
-		Message.Type = IRCMessageType::TopicChanged; 
-		Message.Data.TopicChanged.Nick = new std::string(m_PrefixNick);
-		Message.Data.TopicChanged.User = new std::string(m_PrefixUser);
-		Message.Data.TopicChanged.Host = new std::string(m_PrefixHost);
-		Message.Data.TopicChanged.Channel = new std::string(m_Params[0]);
-		Message.Data.TopicChanged.NewTopic = new std::string(m_Params[1]);
+			Message.Type = IRCMessageType::TopicChanged; 
+			Message.Data.TopicChanged.Nick = new std::string(m_PrefixNick);
+			Message.Data.TopicChanged.User = new std::string(m_PrefixUser);
+			Message.Data.TopicChanged.Host = new std::string(m_PrefixHost);
+			Message.Data.TopicChanged.Channel = new std::string(m_Params[0]);
+			Message.Data.TopicChanged.NewTopic = new std::string(m_Params[1]);
 
-		m_MessageBuffer.push_back(Message);
-		
+			m_MessageBuffer.push_back(Message);
+		}	
 	}
 
 	// --- Kick --- //
 	void CParser::ProcessKick()
 	{
-		IRCMessage Message;
+		if(m_Params.size() >= 3)
+		{
+			IRCMessage Message;
 
-		Message.Type = IRCMessageType::Kick; 
-		Message.Data.Kick.Nick = new std::string(m_PrefixNick);
-		Message.Data.Kick.User = new std::string(m_PrefixUser);
-		Message.Data.Kick.Host = new std::string(m_PrefixHost);
-		Message.Data.Kick.Channel = new std::string(m_Params[0]);
-		Message.Data.Kick.Victim = new std::string(m_Params[1]);
-		Message.Data.Kick.Reason = new std::string(m_Params[2]);
+			Message.Type = IRCMessageType::Kick; 
+			Message.Data.Kick.Nick = new std::string(m_PrefixNick);
+			Message.Data.Kick.User = new std::string(m_PrefixUser);
+			Message.Data.Kick.Host = new std::string(m_PrefixHost);
+			Message.Data.Kick.Channel = new std::string(m_Params[0]);
+			Message.Data.Kick.Victim = new std::string(m_Params[1]);
+			Message.Data.Kick.Reason = new std::string(m_Params[2]);
 
-		m_MessageBuffer.push_back(Message);
+			m_MessageBuffer.push_back(Message);
+		}
 	}
 
 	//------------------------------------------//
@@ -623,6 +628,11 @@ namespace tinyirc
 			throw IRCInvalidChannelPassCharacters();
 		}
 
+		if((ChannelName.size() + ChannelPass.size() + 8) > CParser::MaxIRCMessageLength)
+		{
+			throw IRCMessageTooLong();
+		}
+
 		Package += "JOIN " + ChannelName;
 
 		if(!ChannelPass.empty())
@@ -660,7 +670,7 @@ namespace tinyirc
 			throw IRCInvalidMessageCharacters();
 		}
 
-		if(Reciever.size() + Message.size() + 12)
+		if((Reciever.size() + Message.size() + 12) > CParser::MaxIRCMessageLength)
 		{
 			throw IRCMessageTooLong();
 		}
