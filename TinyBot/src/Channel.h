@@ -16,7 +16,7 @@ class CServer;
 class CChannel
 {
 public:
-	CChannel(const std::string & Name, const std::string & Pass, const PluginPairVector & Plugins, CServer & ServerConnection, CResponseWrapper & ResponseWrapper);
+	CChannel(const std::string & Name, const std::string & Pass, const PluginPairVector & Plugins, CServer & ServerConnection);
 	~CChannel();
 
 	void Reset();
@@ -39,15 +39,22 @@ public:
 	void OnNotice	(const tinyirc::IRCMessage & Message);
 	void OnMessage	(const tinyirc::IRCMessage & Message);
 
+	const std::string & GetChannelName();
+
 private:
 	const std::string m_Name;
 	const std::string m_Pass;
 
 	CServer & m_ServerConnection;
 	tinyirc::CParser & m_IRCParser;
-	CResponseWrapper & m_ResponseInterface;
 
 	ChannelPluginVector m_Plugins;
 	StringSet m_NickList;
 
 };
+
+inline
+const std::string & CChannel::GetChannelName()
+{
+	return m_Name;
+}

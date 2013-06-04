@@ -36,6 +36,7 @@ public:
 	bool Send(const std::string & Message);
 
 	tinyirc::CParser & GetIRCParser();
+	const std::string & GetBotname();
 
 private:
 	static const ev_tstamp RECONNECT_INTERVALL;
@@ -48,7 +49,6 @@ private:
 	PluginPairVector m_Plugins;
 	ChannelMap m_Channels; 
 	tinyirc::CParser m_IRCParser;
-	CResponseWrapper m_ResponseInterface;
 	ev::timer m_ReconnectTimer;
 	ev::io m_SocketWatcher;
 	char m_ReadBuffer[READ_BUFFER_SIZE];
@@ -99,4 +99,9 @@ inline
 tinyirc::CParser & CServer::GetIRCParser()
 {
 	return m_IRCParser;
+}
+inline
+const std::string & CServer::GetBotname()
+{
+	return m_Botname;
 }

@@ -10,7 +10,6 @@ const ev_tstamp	CServer::RECONNECT_INTERVALL = 60.;
 
 CServer::CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const StringPairVector & Channels, const PluginVector & Plugins)
 	:m_Botname(Botname), m_ServerAdress(ServerAdress), m_ServerPort(ServerPort)
-	,m_ResponseInterface(m_IRCParser)
 	,m_Socketfd(-1), m_Connected(false)
 {
 	m_ReconnectTimer.set<CServer, &CServer::timer_cb_TryReconnect>(this);
@@ -46,7 +45,7 @@ void CServer::InstanciateChannels(const StringPairVector & Channels)
 {
 	for(StringPairVector::const_iterator it = Channels.begin(); it != Channels.end(); ++it)
 	{
-		m_Channels.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*(*it)->first), (*(*it)->second), m_Plugins, *this, m_ResponseInterface)));
+		m_Channels.insert(std::pair<std::string, CChannel * >((*((*it)->first)), new CChannel((*(*it)->first), (*(*it)->second), m_Plugins, *this)));
 	}
 
 }
@@ -232,17 +231,14 @@ void CServer::Disconnect()
 	if(m_Connected)
 	{
 		//Send Disconnect
-		m_ResponseInterface.Clear();
+		CResponseWrapper ResponseInterface(m_IRCParser, *this);
 
 		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 		{
-			(it->first)->OnShutdown(m_ResponseInterface);
+			(it->first)->OnShutdown(ResponseInterface);
 		}
 
-		if(m_ResponseInterface.Filled())
-		{
-			Send(m_ResponseInterface.GetResponse());
-		}
+		ResponseInterface.Send();
 
 		std::string Package;
 
@@ -476,46 +472,38 @@ void CServer::ProcessWelcome(const tinyirc::IRCMessage & Message)
 {
 	JoinChannels();
 
-	m_ResponseInterface.Clear();
+	CResponseWrapper ResponseInterface(m_IRCParser, *this);
 
 	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(it->first)->OnWelcome(*Message.Data.Welcome.Message, m_ResponseInterface);
+		(it->first)->OnWelcome(*Message.Data.Welcome.Message, ResponseInterface);
 	}
-
-	if(m_ResponseInterface.Filled())
-	{
-		Send(m_ResponseInterface.GetResponse());
-	}
+	
+	ResponseInterface.Send();
 }
 
 void CServer::ProcessMOTD(const tinyirc::IRCMessage & Message)
 {
-	m_ResponseInterface.Clear();
+	CResponseWrapper ResponseInterface(m_IRCParser, *this);
 
 	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(it->first)->OnMOTD(*Message.Data.MOTD.Message, m_ResponseInterface);
+		(it->first)->OnMOTD(*Message.Data.MOTD.Message, ResponseInterface);
 	}
-
-	if(m_ResponseInterface.Filled())
-	{
-		Send(m_ResponseInterface.GetResponse());
-	}
+	
+	ResponseInterface.Send();
 }
 
 void CServer::ProcessUserMode(const tinyirc::IRCMessage & Message)
 {
-	m_ResponseInterface.Clear();
+	CResponseWrapper ResponseInterface(m_IRCParser, *this);
 
 	for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 	{
-		(it->first)->OnUserMode(*Message.Data.UserMode.SenderNick, *Message.Data.UserMode.SenderUser, *Message.Data.UserMode.SenderHost, Message.Data.UserMode.ModeAsChar,  Message.Data.UserMode.SetMode, m_ResponseInterface);
+		(it->first)->OnUserMode(*Message.Data.UserMode.SenderNick, *Message.Data.UserMode.SenderUser, *Message.Data.UserMode.SenderHost, Message.Data.UserMode.ModeAsChar,  Message.Data.UserMode.SetMode, ResponseInterface);
 	}
-	if(m_ResponseInterface.Filled())
-	{
-		Send(m_ResponseInterface.GetResponse());
-	}
+	
+	ResponseInterface.Send();
 }
 
 void CServer::ProcessPrvtMessage(const tinyirc::IRCMessage & Message)
@@ -524,17 +512,14 @@ void CServer::ProcessPrvtMessage(const tinyirc::IRCMessage & Message)
 
 	if(Result == m_Channels.end())
 	{
-		m_ResponseInterface.Clear();
+		CResponseWrapper ResponseInterface(m_IRCParser, *this);
 
 		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 		{
-			(it->first)->OnPrvtMessage(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, m_ResponseInterface);
+			(it->first)->OnPrvtMessage(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, ResponseInterface);
 		}
 
-		if(m_ResponseInterface.Filled())
-		{
-			Send(m_ResponseInterface.GetResponse());
-		}
+		ResponseInterface.Send();
 	}
 	else
 	{
@@ -549,17 +534,14 @@ void CServer::ProcessNotice(const tinyirc::IRCMessage & Message)
 
 	if(Result == m_Channels.end())
 	{
-		m_ResponseInterface.Clear();
+		CResponseWrapper ResponseInterface(m_IRCParser, *this);
 
 		for(PluginPairVector::iterator it = m_Plugins.begin(); it != m_Plugins.end(); ++it)
 		{
-			(it->first)->OnNotice(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, m_ResponseInterface);
+			(it->first)->OnNotice(*Message.Data.Message.Nick, *Message.Data.Message.User, *Message.Data.Message.Host, *Message.Data.Message.Message, ResponseInterface);
 		}
 
-		if(m_ResponseInterface.Filled())
-		{
-			Send(m_ResponseInterface.GetResponse());
-		}
+		ResponseInterface.Send();
 	}
 	else
 	{
