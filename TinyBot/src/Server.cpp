@@ -705,14 +705,24 @@ bool CServer::Send(const std::string & Message)
 
 	Output::Log(m_ServerAdress.c_str(), {"Sending -> ", Message.c_str()});
 
-	int result = send(m_Socketfd, Message.c_str(), Message.size(), MSG_NOSIGNAL);
+	const size_t BytesSendAtOnce = 512;
+	size_t BytesSend = 0;
 
-	if(result < 0)
+	while(BytesSend < Message.size())
 	{
-		Output::Error("Server", {"Error on sending Data to ", m_ServerAdress.c_str(), ". Reconnecting!"});
-		Reconnect();
-		return false;
+		size_t BytesToSend = ((BytesSend + BytesSendAtOnce) > Message.size()) ? (Message.size() - BytesSend) : BytesSendAtOnce;
+		ssize_t result = send(m_Socketfd, (Message.c_str() + BytesSend), BytesToSend, MSG_NOSIGNAL);
+
+		if(result < 0)
+		{
+			Output::Error("Server", {"Error on sending Data to ", m_ServerAdress.c_str(), ". Reconnecting!"});
+			Reconnect();
+			return false;
+		}	
+
+		BytesSend += BytesToSend;
 	}
+
 
 	return true;
 }
