@@ -53,6 +53,9 @@ void CChannel::OnUserList(const std::vector<std::string> & UserList, IResponseIn
 	{
 		m_NickList.insert(*it);
 	}
+
+	CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, " --- Bot joined Channel " + m_ChannelName + " as " + m_BotName + " --- ");	
+	
 }
 
 void CChannel::OnTopic(const std::string & Topic, IResponseInterface & Response)
@@ -177,11 +180,13 @@ void CChannel::OnMessage(const std::string & Nick, const std::string & User, con
 
 void CChannel::OnShutdown(IResponseInterface & Response)
 {
+	CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, std::string(" --- The Bot is shutting down --- "));
 	LogAndClearUserList();
 }
 
 void CChannel::OnDisconnect()
 {
+	CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, std::string(" --- Connection Lost --- "));
 	LogAndClearUserList();
 }
 
@@ -238,7 +243,7 @@ void CChannel::CommandLog(const StringVector & Parameter, IResponseInterface & R
 		else
 		{
 			m_LogEnabled = true;
-			Response.SendMessage(m_ChannelName, std::string("- Logging has been enabled - "));
+			Response.SendMessage(m_ChannelName, std::string(" --- Logging has been enabled --- "));
 		}
 
 		return;
@@ -250,7 +255,8 @@ void CChannel::CommandLog(const StringVector & Parameter, IResponseInterface & R
 		{
 			LogUserList(std::string("Logging disabled"));
 			m_LogEnabled = false;
-			Response.SendMessage(m_ChannelName, std::string("- Logging has been disabled - "));
+			CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, std::string(" --- Logging has been disabled --- "));
+			Response.SendMessage(m_ChannelName, std::string(" --- Logging has been disabled --- "));
 		}
 		else
 		{
