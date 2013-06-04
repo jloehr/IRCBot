@@ -80,6 +80,9 @@ void CServer::OnShutdown(IResponseInterface & Response)
 
 void CServer::OnDisconnect()
 {
-
+	for(ChannelSet::iterator it = m_Channels.begin(); it != m_Channels.end(); ++it)
+	{
+		(*it)->OnDisconnect();
+	}
 }
 

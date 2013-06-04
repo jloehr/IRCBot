@@ -1,7 +1,10 @@
 #pragma once
 
-#include "PlugInInterface.h"
+#include <string>
+#include <set>
 
+#include "PlugInInterface.h"
+#include "DatabaseWrapper.h"
 
 class CChannel: public IChannelInterface
 {
@@ -25,7 +28,15 @@ public:
 	virtual void OnMessage(const std::string & Nick, const std::string & User, const std::string & Host, const std::string & Message, IResponseInterface & Response);
 
 	void OnShutdown(IResponseInterface & Response);
+	void OnDisconnect();
 
 private:
+	typedef std::set<std::string> StringSet;
+
 	const std::string & m_ChannelName;
+	StringSet m_NickList;
+	bool m_LogEnabled;
+
+	void LogAndClearUserList();
+	void LogUserList(const std::string & Reason);
 };
