@@ -373,7 +373,7 @@ namespace tinyirc
 		Message.Data.Quit.Nick = new std::string(m_PrefixNick);
 		Message.Data.Quit.User = new std::string(m_PrefixUser);
 		Message.Data.Quit.Host = new std::string(m_PrefixHost);
-		Message.Data.Quit.Message = (m_Params.size() > 1) ? new std::string(m_Params[m_Params.size() - 1]) : new std::string("");
+		Message.Data.Quit.Message = (m_Params.size() > 0) ? new std::string(m_Params[m_Params.size() - 1]) : new std::string("");
 		
 		m_MessageBuffer.push_back(Message);
 		
