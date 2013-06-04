@@ -1,6 +1,7 @@
 #generic files
 *.o
 *.sublime-*
+*.sqlite
 
 #specific files
 Makefile.dep
