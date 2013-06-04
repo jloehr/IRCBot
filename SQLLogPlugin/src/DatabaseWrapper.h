@@ -24,16 +24,16 @@ public:
 	void GetLog(const std::string & Channel, StringPairVector & OutVector);
 
 	void UserLeft(const std::string & Channel, const std::string & Nick, const std::string & Reason);
-	std::string LastSeen(const std::string & Nick);
+	void LastSeen(const std::string & Channel, const std::string & Nick, std::string & Time, std::string & Reason);
 
 private:
-	const static std::string LogTableName;
-	const static std::string LastSeenTableName;
-	const static std::string PrepareQuery;
-	const static std::string InsertLogQuery;
-	const static std::string GetLogQuery;
-	const static std::string InsertLastSeenQuery;
-	const static std::string GetLastSeenQuery;
+	static const std::string LogTableName;
+	static const std::string LastSeenTableName;
+	static const std::string PrepareQuery;
+	static const std::string InsertLogQuery;
+	static const std::string GetLogQuery;
+	static const std::string InsertLastSeenQuery;
+	static const std::string GetLastSeenQuery;
 
 	sqlite3 * m_dbHandle;
 	sqlite3_stmt * m_InsertLogStatement;

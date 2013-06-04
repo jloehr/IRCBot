@@ -30,7 +30,7 @@ CServer::~CServer()
 
 IChannelInterface & CServer::GetChannelInterface(const std::string & ChannelName)
 {
-	CChannel * Tmp = new CChannel(ChannelName);
+	CChannel * Tmp = new CChannel(m_Nick, ChannelName);
 
 	typedef std::pair<ChannelSet::iterator, bool> InsertResult;
 	InsertResult Result = m_Channels.insert(Tmp);

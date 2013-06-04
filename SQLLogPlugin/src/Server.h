@@ -25,8 +25,8 @@ public:
 	virtual void OnDisconnect	();
 
 private:
-	const std::string m_Nick;
-	const std::string m_ServerAdress;
+	const std::string & m_Nick;
+	const std::string & m_ServerAdress;
 
 	ChannelSet m_Channels;
 

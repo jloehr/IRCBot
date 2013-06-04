@@ -2,6 +2,8 @@
 
 #include <string>
 #include <set>
+#include <map>
+#include <vector>
 
 #include "PlugInInterface.h"
 #include "DatabaseWrapper.h"
@@ -9,7 +11,7 @@
 class CChannel: public IChannelInterface
 {
 public:
-	CChannel(const std::string & ChannelName);
+	CChannel(const std::string & BotName, const std::string & ChannelName);
 	virtual ~CChannel();
 
 	//Channel Events
@@ -32,11 +34,34 @@ public:
 
 private:
 	typedef std::set<std::string> StringSet;
+	typedef std::vector<std::string> StringVector;
+	typedef void (CChannel::*CommandFunctionName)(const StringVector & Parameter, IResponseInterface & Response);
+	typedef std::map<std::string, CommandFunctionName> CommandFunctionMap;
 
+	static const std::string HelpCommand;
+	static const std::string LogCommand;
+	static const std::string PrintLogCommand;
+	static const std::string LastSeenCommand;
+
+	static const CommandFunctionMap m_CommandFunctionMap;
+
+	const std::string & m_BotName;
 	const std::string & m_ChannelName;
+	const std::string m_CommandPrefix;
+
 	StringSet m_NickList;
 	bool m_LogEnabled;
 
+
 	void LogAndClearUserList();
 	void LogUserList(const std::string & Reason);
+
+	void ParseCommand(const std::string & MessageTail, std::string & Command, StringVector & Parameter);
+
+	void CommandLog(const StringVector & Parameter, IResponseInterface & Response);	
+	void CommandPrint(const StringVector & Parameter, IResponseInterface & Response);
+	void CommandLastSeen(const StringVector & Parameter, IResponseInterface & Response);
+	void CommandHelp(const StringVector & Parameter, IResponseInterface & Response);
+
+	void PrintCommands(IResponseInterface & Response);
 };
