@@ -7,7 +7,7 @@ SOURCEDIR = ./src/
 CC=g++
 CL=ar rcs
 CPPFLAGS=-c -Wall -std=c++11 $(INCDIR) -ggdb
-LDFLAGS= -lev -L$(LIBDIR)
+LDFLAGS= -L$(LIBDIR)
 
 SOURCES=$(wildcard $(SOURCEDIR)*.cpp)
 HEADERS=$(wildcard $(SOURCEDIR)*.h)

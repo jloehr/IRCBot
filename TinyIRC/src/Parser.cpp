@@ -1,3 +1,13 @@
+/*
+ *
+ * Copyright (C) 2013 Julian Löhr
+ * All rights reserved.
+ *
+ * This file is part of TinyIRC, an IRC Client Implementation.
+ * TinyIRC is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+ * To read the full license, please check the LICENSE file.
+ *
+*/
 #include "Parser.h"
 
 namespace tinyirc
@@ -498,6 +508,10 @@ namespace tinyirc
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Key;
 						Message.Data.ChannelMode.Param = (ParamIndex < m_Params.size()) ? new std::string(m_Params[ParamIndex++]) : new std::string("");
 						break;
+					default:
+						Message.Data.ChannelMode.Mode = IRCChannelMode::Undefined;
+						Message.Data.ChannelMode.Param = new std::string("");
+
 				}
 			}
 			else
@@ -525,6 +539,8 @@ namespace tinyirc
 					case 'o':
 						Message.Data.UserMode.Mode = IRCUserMode::Operator;
 						break;
+					default:
+						Message.Data.UserMode.Mode = IRCUserMode::Undefined;
 				}
 			}
 

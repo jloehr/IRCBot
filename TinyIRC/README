@@ -1,0 +1,206 @@
+TinyIRC is an IRC Protocol Implemention for clients.
+Version 0.7
+
+BE AWARE TinyIRC DOES NOT SUPPORTS THE WHOLE IRC PROTOCOL IN ITS CURRENT IMPLEMENTION!
+
+The following functionality is implemented:
+
+	- Outgoing -
+		- Register nickname and user (NICK and USER)
+		- Joining channels
+		- Sending Private Messages to Channel and other Users
+		- Quit Message
+
+	- Incomming -
+		- Welcome Message from Server
+		- Recieving the MOTD
+		- Ping response
+
+		- UserList of a Channel
+		- Topic of a Channel
+		- Nick changes
+		- Topic changes
+		- User and Channel Mode changes
+		- User joins Channel
+		- User parts from Channel
+		- User quits
+		- User is kicked
+		- Privat Messages
+		- Notices
+
+
+HowTo:
+
+- Compiling the library - 
+
+The library does not use any third-party library, except the STL, which should be included in any modern compiler.
+A modern compiler wich support the C++11 standart is needed as well as the C++11 compiler flag when compiling.
+
+The included makefile uses the "ar" programm to create a static library and copies the headers into an "include" folder inside the bin folder.
+The files are compiled with "Wall", "std=c++11" and "gdb" for debug purposes. I recommend to edit the Makefile for your purposes.
+
+
+- Use in Code - 
+
+All Code from this library uses his own namespace "tinyirc".
+
+Instanciate one "CParser"-Class per server connection. This instance can be reused after a disconnect, after calling the "Reset"-Method.
+
+Pass the incomming bytes, and only the new incomming bytes, to the "Parse"-Method. The passed bytes are copied and buffered, so partial messages are automaticly assembled.
+If the "Response"-String is filled send it back to the server as it is. All completly recieved messages are parsed and appended to the IRCMessageVector "Messages".
+Both the "Response"-String and the "Message"-Vector are NOT cleared by the "Parse"-Method. The return value indicates wether the connection must be closed or not after sending the "Response".
+
+For Outgoing Messages use the appropriate Method. Those are packing the given arguments and appending the result to "Package". Therefore you can first pack all your outgoing messages and then send the "Package" at once.
+
+All Methods might throw exceptions. See the overview of all classes below for further informations.
+
+
+- Library Overview -
+
+typedef IRCMessageVector:
+	std::vector of IRCMessage.
+
+Class CParser:
+	- void Reset()
+		Resets the class to be used for a new connection. E.g. flushes the intern buffers.
+
+		Throws: Nothing
+
+
+	- bool Parse(const std::string & Recieved, std::string & Response, IRCMessageVector & Messages)
+		Parses "Recieved" Bytes into IRCMessages. Buffers and assembles incompleted Messages.
+
+		Recieved: The recieved bytes from the Server.
+		Response: Out Parameter; Messages which must be send back to the Server are appended. The string is not cleared.
+		Messages: Out Parameter; The parsed Messages are appended as "IRCMessage". The vector is not cleared.
+		Return: Indicates wether the connection to the server must be closed after the "Response" is send.
+		Throws: Nothing
+
+
+	- void Register(const std::string & Nick, const std::string & RealName, std::string & Package) const
+		Creates the inital messages for the register at the server.
+
+		Nick: The Nick used as display name in the channels.
+		RealName: The information dislayed on "WHOIS" requests.
+		Package: Out Parameter; The packed messages are appended on this string. The string is not cleared.
+		Thows: IRCNoNickGiven, IRCNickTooLong, IRCInvalidFirstNickCharacter, IRCInvalidNickCharacters, IRCNoRealnameGiven, IRCInvalidRealnameCharacters
+
+
+	- void JoinChannel(const std::string & ChannelName, const std::string & ChannelPass, std::string & Package) const
+		Creates a message to join a channel.
+
+		ChannelName: The name of the channel to be joined. Has to start with "#" or "&".
+		ChannelPass: The optional key for the channel. Can be empty.
+		Package: Out Parameter; The packed message is appended on this string. The string is not cleared.
+		Throws: IRCNoChannelNameGiven, IRCChannelNameTooLong, IRCInvalidFirstChannelNameCharacter, IRCInvalidChannelNameCharacters, IRCInvalidChannelPassCharacters, IRCMessageTooLong
+
+
+	- void SendMessage(const std::string & Reciever, const std::string & Message, std::string & Package) const
+		Packs "Message" to be send to "Reciever". IRC does not loop messages to channels back to the sender.
+
+		Reciever: The name of the reciever. Can be either a nick or a channel.
+		Message: The message to be send.
+		Package: Out Parameter; The packed message is appended on this string. The string is not cleared.
+		Throws: IRCNoRecieverGiven, IRCRecieverTooLong, IRCInvalidRecieverCharacters, IRCInvalidMessageCharacters, IRCMessageTooLong
+
+
+	- void GetClosingPackage(const std::string & ExitMessage, std::string & Package) const
+		Creates a quit message, which must be send when closing the connection.
+
+		ExitMessage: The message to be displayed to other users. Can be empty.
+		Package: Out Parameter; The packed message is appended on this string. The string is not cleared.
+		Throws: IRCInvalidExitMsgCharacters, IRCMessageTooLong
+
+
+Struct IRCMessage: 
+	- IRCMessageType::Type Type
+		The type of the message. Possible values are: Undefined, Welcome, MOTD, NickChange, UserList, Topic, Message, Notice, Join, Part, Quit, UserMode, ChannelMode, TopicChanged, Kick
+
+	- Union Data
+		The additional data of the message. The following fields are available inside a struct named and depending on the Type (except for Notice, it uses the Message struct):
+
+		* Welcome
+			- std::string * Message: The Welcome Message
+
+		* MOTD
+			- std::string * Message: The MOTD
+
+		* NickChange
+			- std::string * Nick;
+			- std::string * User;
+			- std::string * Host;
+			- std::string * NewNick;
+
+		* UserList:
+			- std::string * Channel;
+			- std::vector<std::string> * Nicks;
+
+		* Topic:
+			- std::string * Channel;
+			- std::string * Topic;
+	
+		* Message: Used by Message and Notive.
+			- std::string * Nick;
+			- std::string * User;
+			- std::string * Host;
+			- std::string * Reciever;
+			- std::string * Message;
+			
+
+		* Join:
+			- std::string * Nick;
+			- std::string * User;
+			- std::string * Host;
+			- std::string * Channel;
+		
+
+		* Part:
+			- std::string * Nick;
+			- std::string * User;
+			- std::string * Host;
+			- std::string * Channel;
+			- std::string * Message;
+		
+		* Quit:
+			- std::string * Nick;
+			- std::string * User;
+			- std::string * Host;
+			- std::string * Message;
+		
+		* UserMode:
+			- std::string * SenderNick;
+			- std::string * SenderUser;
+			- std::string * SenderHost;
+			- std::string * AffectedNick;
+			- bool SetMode: Indicates if the Mode is set or removed.
+			- IRCUserMode::Type Mode: The mode as enum. Possible Values: Undefined, Invisible, ServerNotices, Wallops, Operator
+			- char ModeAsChar;
+			
+		* ChannelMode:
+			- std::string * SenderNick;
+			- std::string * SenderUser;
+			- std::string * SenderHost;
+			- std::string * Channel;
+			- bool SetMode: Indicates if the Mode is set or removed.
+			- IRCChannelMode::Type Mode The mode as enum. Possibe Values: Undefined, Operator, Privat, Secret, InviteOnly, TopicSettableOnlyByOps, NoMessagesFromOutside, Moderated, UserLimit, Ban, Voice, Key
+			- char ModeAsChar;
+			- std::string * Param;
+		
+		* TopicChanged:
+			- std::string * Nick;
+			- std::string * User;
+			- std::string * Host;
+			- std::string * Channel;
+			- std::string * NewTopic;
+		
+		* Kick:
+			- std::string * Nick;
+			- std::string * User;
+			- std::string * Host;
+			- std::string * Channel;
+			- std::string * Victim;
+			- std::string * Reason;
+
+
+
+
