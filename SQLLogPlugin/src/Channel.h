@@ -54,6 +54,8 @@ private:
 	const std::string m_CommandPrefix;
 
 	StringSet m_NickList;
+	StringSet m_Operators;
+	StringSet m_Voiced;
 	bool m_LogEnabled;
 
 

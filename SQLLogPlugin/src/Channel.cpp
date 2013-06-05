@@ -58,7 +58,25 @@ void CChannel::OnUserList(const std::vector<std::string> & UserList, IResponseIn
 {
 	for(std::vector<std::string>::const_iterator it = UserList.begin(); it != UserList.end(); ++it)
 	{
-		m_NickList.insert(*it);
+		const std::string & Nick = (*it);
+
+		if(!Nick.empty())
+		{
+			if(Nick[0] == '@')
+			{
+				m_NickList.insert(Nick.substr(1));
+				m_Operators.insert(Nick.substr(1));
+			}	
+			else if(Nick[0] == '+')
+			{
+				m_NickList.insert(Nick.substr(1));
+				m_Voiced.insert(Nick.substr(1));
+			}
+			else
+			{
+				m_NickList.insert(Nick);
+			}
+		}
 	}
 
 	CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, " --- Bot joined Channel " + m_ChannelName + " as " + m_BotName + " --- ");	
@@ -72,6 +90,30 @@ void CChannel::OnTopic(const std::string & Topic, IResponseInterface & Response)
 
 void CChannel::OnChannelMode(const std::string & Nick, const std::string & User, const std::string & Host, const char Mode, const bool Set, const std::string & Param, IResponseInterface & Response)
 {
+	StringSet * List = NULL;
+
+	switch(Mode)
+	{
+		case 'o':
+			List = &m_Operators;
+			break;
+		case 'v':
+			List = &m_Voiced;
+			break;
+	}
+
+	if(List != NULL)
+	{
+		if(Set)
+		{
+			List->insert(Param);
+		}	
+		else
+		{
+			List->erase(Param);
+		}
+	}
+
 	if(m_LogEnabled)
 	{
 		std::string SetSymbol = Set ? "+" : "-";
@@ -94,6 +136,8 @@ void CChannel::OnJoin(const std::string & Nick, const std::string & User, const 
 void CChannel::OnPart(const std::string & Nick, const std::string & User, const std::string & Host, const std::string & Message, IResponseInterface & Response)
 {
 	m_NickList.erase(Nick);
+	m_Operators.erase(Nick);
+	m_Voiced.erase(Nick);
 
 	if(m_LogEnabled)
 	{
@@ -106,6 +150,8 @@ void CChannel::OnPart(const std::string & Nick, const std::string & User, const 
 void CChannel::OnQuit(const std::string & Nick, const std::string & User, const std::string & Host, const std::string & Message, IResponseInterface & Response)
 {
 	m_NickList.erase(Nick);
+	m_Operators.erase(Nick);
+	m_Voiced.erase(Nick);
 
 	if(m_LogEnabled)
 	{
@@ -118,6 +164,8 @@ void CChannel::OnQuit(const std::string & Nick, const std::string & User, const 
 void CChannel::OnKick(const std::string & Nick, const std::string & User, const std::string & Host, const std::string & Victim, const std::string & Reason, IResponseInterface & Response)
 {
 	m_NickList.erase(Victim);
+	m_Operators.erase(Victim);
+	m_Voiced.erase(Victim);
 
 	if(m_LogEnabled)
 	{
@@ -131,6 +179,18 @@ void CChannel::OnNickChange(const std::string & Nick, const std::string & User, 
 {
 	m_NickList.erase(Nick);
 	m_NickList.insert(NewNick);
+
+	if(m_Operators.find(Nick) != m_Operators.end())
+	{
+		m_Operators.erase(Nick);
+		m_Operators.insert(NewNick);
+	}
+
+	if(m_Voiced.find(Nick) != m_Voiced.end())
+	{
+		m_Voiced.erase(Nick);
+		m_Voiced.insert(NewNick);
+	}
 
 	if(m_LogEnabled)
 	{
@@ -158,7 +218,18 @@ void CChannel::OnMessage(const std::string & Nick, const std::string & User, con
 {
 	if((m_LogEnabled) && ((Nick != m_BotName) || (Message.substr(0, LogOutputPrefix.size()) != LogOutputPrefix)))
 	{
-		std::string LogMessage("<" + Nick + "> " + Message);
+		std::string NickPrefix;
+
+		if(m_Operators.find(Nick) != m_Operators.end())
+		{
+			NickPrefix = "@";
+		}
+		else if(m_Voiced.find(Nick) != m_Voiced.end())
+		{
+			NickPrefix = "+";
+		}
+
+		std::string LogMessage("<" + NickPrefix + Nick + "> " + Message);
 		CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, LogMessage);
 	}
 
@@ -390,26 +461,33 @@ void CChannel::CommandLastSeen(const std::string & Sender, const StringVector & 
 
 	for(StringVector::const_iterator it = Parameter.begin(); it != Parameter.end(); ++it)
 	{
-		if(!(*it).empty())
+		std::string Nick = (*it);
+
+		if((!Nick.empty()) && ((Nick[0] == '@') || (Nick[0] == '+')))
+		{
+			Nick.erase(0, 1);
+		}
+
+		if(!Nick.empty())
 		{
 			NameGiven = true;
 
-			if(m_NickList.find((*it)) != m_NickList.end())
+			if(m_NickList.find(Nick) != m_NickList.end())
 			{
-				Response.SendMessage(m_ChannelName, std::string((*it) + " is currently present"));
+				Response.SendMessage(m_ChannelName, std::string(Nick + " is currently present"));
 			}
 			else
 			{
 				std::string DateTime, Reason;
-				CDatabaseWrapper::Singleton.LastSeen(m_ChannelName, (*it), DateTime, Reason);
+				CDatabaseWrapper::Singleton.LastSeen(m_ChannelName, Nick, DateTime, Reason);
 
 				if(DateTime.empty())
 				{
-					Response.SendMessage(m_ChannelName, std::string((*it) + " is unkown"));
+					Response.SendMessage(m_ChannelName, std::string(Nick + " is unkown"));
 				}
 				else
 				{
-					Response.SendMessage(m_ChannelName, std::string((*it) + " is absent since " + DateTime + " " + Reason));
+					Response.SendMessage(m_ChannelName, std::string(Nick + " is absent since " + DateTime + " " + Reason));
 				}
 			}
 		}
@@ -449,6 +527,8 @@ void CChannel::LogAndClearUserList()
 {
 	LogUserList(std::string("Bot was shutdown"));
 	m_NickList.clear();
+	m_Operators.clear();
+	m_Voiced.clear();
 }
 
 
