@@ -176,18 +176,24 @@ namespace tinyirc
 					break;
 
 				case IRCMessageType::UserMode:
-					Data.UserMode.SenderNick = Copy(Source.Data.UserMode.SenderNick);
-					Data.UserMode.SenderUser = Copy(Source.Data.UserMode.SenderUser);
-					Data.UserMode.SenderHost = Copy(Source.Data.UserMode.SenderHost);
-					Data.UserMode.AffectedNick = Copy(Source.Data.UserMode.AffectedNick);
+					Data.UserMode.SenderNick =		Copy(Source.Data.UserMode.SenderNick);
+					Data.UserMode.SenderUser = 		Copy(Source.Data.UserMode.SenderUser);
+					Data.UserMode.SenderHost = 		Copy(Source.Data.UserMode.SenderHost);
+					Data.UserMode.AffectedNick = 	Copy(Source.Data.UserMode.AffectedNick);
+					Data.UserMode.SetMode = 		Source.Data.UserMode.SetMode;
+					Data.UserMode.ModeAsChar = 		Source.Data.UserMode.ModeAsChar;
+					Data.UserMode.Mode = 			Source.Data.UserMode.Mode;
 					break;
 
 				case IRCMessageType::ChannelMode:
-					Data.ChannelMode.SenderNick = Copy(Source.Data.ChannelMode.SenderNick);
-					Data.ChannelMode.SenderUser = Copy(Source.Data.ChannelMode.SenderUser);
-					Data.ChannelMode.SenderHost = Copy(Source.Data.ChannelMode.SenderHost);
-					Data.ChannelMode.Channel = Copy(Source.Data.ChannelMode.Channel);
-					Data.ChannelMode.Param = Copy(Source.Data.ChannelMode.Param);
+					Data.ChannelMode.SenderNick = 	Copy(Source.Data.ChannelMode.SenderNick);
+					Data.ChannelMode.SenderUser = 	Copy(Source.Data.ChannelMode.SenderUser);
+					Data.ChannelMode.SenderHost = 	Copy(Source.Data.ChannelMode.SenderHost);
+					Data.ChannelMode.Channel = 		Copy(Source.Data.ChannelMode.Channel);
+					Data.ChannelMode.Param = 		Copy(Source.Data.ChannelMode.Param);
+					Data.ChannelMode.SetMode = 		Source.Data.ChannelMode.SetMode;
+					Data.ChannelMode.ModeAsChar = 	Source.Data.ChannelMode.ModeAsChar;
+					Data.ChannelMode.Mode = 		Source.Data.ChannelMode.Mode;
 					break;
 
 				case IRCMessageType::TopicChanged:

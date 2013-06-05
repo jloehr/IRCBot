@@ -419,12 +419,25 @@ namespace tinyirc
 	// --- Modes --- //
 	void CParser::ProcessMode()
 	{
+		if((m_Params[1][0] != '+') && (m_Params[1][0] != '-'))
+		{
+			return;
+		}
+
 		std::string & Reciever = m_Params[0];
 		bool ChannelMode = ((Reciever[0] == '#') || (Reciever[0] == '&'));
 		bool SetMode = (m_Params[1][0] == '+');
 
+		size_t ParamIndex = 2;
+
 		for(std::string::iterator it = (m_Params[1].begin() + 1); it != m_Params[1].end(); ++it)
 		{
+			if(((*it) == '+') || ((*it) == '-'))
+			{
+				SetMode = ((*it) == '+');
+				continue;
+			}
+
 			IRCMessage Message;
 
 			if(ChannelMode)
@@ -437,46 +450,53 @@ namespace tinyirc
 				Message.Data.ChannelMode.Channel = new std::string(Reciever);
 				Message.Data.ChannelMode.SetMode = SetMode;
 				Message.Data.ChannelMode.ModeAsChar = (*it);
-
-				if(m_Params.size() > 2)
-				{
-					Message.Data.ChannelMode.Param = new std::string(m_Params[2]);
-				}
+				//Message.Data.ChannelMode.Param = (m_Params.size() >= ParamIndex) ? new std::string(m_Params[2]) : new std::string("");
 
 				switch(*it)
 				{
 					case 'o':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Operator;
+						Message.Data.ChannelMode.Param = (ParamIndex < m_Params.size()) ? new std::string(m_Params[ParamIndex++]) : new std::string("");
 						break;
 					case 'p':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Privat;
+						Message.Data.ChannelMode.Param = new std::string("");
 						break;
 					case 's':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Secret;
+						Message.Data.ChannelMode.Param = new std::string("");
 						break;
 					case 'i':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::InviteOnly;
+						Message.Data.ChannelMode.Param = new std::string("");
 						break;
 					case 't':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::TopicSettableOnlyByOps;
+						Message.Data.ChannelMode.Param = new std::string("");
 						break;
 					case 'n':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::NoMessagesFromOutside;
+						Message.Data.ChannelMode.Param = new std::string("");
 						break;
 					case 'm':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Moderated;
+						Message.Data.ChannelMode.Param = new std::string("");
 						break;
 					case 'l':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::UserLimit;
+						Message.Data.ChannelMode.Param = (ParamIndex < m_Params.size()) ? new std::string(m_Params[ParamIndex++]) : new std::string("");
 						break;
 					case 'b':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Ban;
+						Message.Data.ChannelMode.Param = (ParamIndex < m_Params.size()) ? new std::string(m_Params[ParamIndex++]) : new std::string("");
 						break;
 					case 'v':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Voice;
+						Message.Data.ChannelMode.Param = (ParamIndex < m_Params.size()) ? new std::string(m_Params[ParamIndex++]) : new std::string("");
 						break;
 					case 'k':
 						Message.Data.ChannelMode.Mode = IRCChannelMode::Key;
+						Message.Data.ChannelMode.Param = (ParamIndex < m_Params.size()) ? new std::string(m_Params[ParamIndex++]) : new std::string("");
 						break;
 				}
 			}
@@ -490,6 +510,7 @@ namespace tinyirc
 				Message.Data.UserMode.AffectedNick = new std::string(Reciever);
 				Message.Data.UserMode.SetMode = SetMode;
 				Message.Data.UserMode.ModeAsChar = (*it);
+
 				switch(*it)
 				{
 					case 'i':
@@ -514,7 +535,7 @@ namespace tinyirc
 	// --- Topic Changed --- //
 	void CParser::ProcessTopicChanged()
 	{
-		if(m_Params.size() > 1)
+		if(m_Params.size() >= 1)
 		{
 			IRCMessage Message;
 
@@ -523,7 +544,7 @@ namespace tinyirc
 			Message.Data.TopicChanged.User = new std::string(m_PrefixUser);
 			Message.Data.TopicChanged.Host = new std::string(m_PrefixHost);
 			Message.Data.TopicChanged.Channel = new std::string(m_Params[0]);
-			Message.Data.TopicChanged.NewTopic = new std::string(m_Params[1]);
+			Message.Data.TopicChanged.NewTopic = (m_Params.size() >= 2) ? new std::string(m_Params[1]) : new std::string("");
 
 			m_MessageBuffer.push_back(Message);
 		}	
@@ -532,7 +553,7 @@ namespace tinyirc
 	// --- Kick --- //
 	void CParser::ProcessKick()
 	{
-		if(m_Params.size() >= 3)
+		if(m_Params.size() >= 2)
 		{
 			IRCMessage Message;
 
@@ -542,7 +563,7 @@ namespace tinyirc
 			Message.Data.Kick.Host = new std::string(m_PrefixHost);
 			Message.Data.Kick.Channel = new std::string(m_Params[0]);
 			Message.Data.Kick.Victim = new std::string(m_Params[1]);
-			Message.Data.Kick.Reason = new std::string(m_Params[2]);
+			Message.Data.Kick.Reason = (m_Params.size() >= 3) ? new std::string(m_Params[2]) : new std::string("");
 
 			m_MessageBuffer.push_back(Message);
 		}
