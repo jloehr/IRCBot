@@ -4,9 +4,9 @@ const std::string CDatabaseWrapper::LogTableName = std::string("chatlog");
 const std::string CDatabaseWrapper::LastSeenTableName = std::string("lastseen");
 const std::string CDatabaseWrapper::PrepareQuery = std::string("CREATE TABLE IF NOT EXISTS "+CDatabaseWrapper::LogTableName+" (Time INTEGER, Channel TEXT, Message TEXT); CREATE TABLE IF NOT EXISTS "+CDatabaseWrapper::LastSeenTableName+" (Time INTEGER, Channel TEXT, Nick TEXT, Reason TEXT, PRIMARY KEY (Nick, Channel));");
 const std::string CDatabaseWrapper::InsertLogQuery = std::string("INSERT INTO "+CDatabaseWrapper::LogTableName+" VALUES (strftime('%s','now'), ?, ?);");
-const std::string CDatabaseWrapper::GetLogQuery = std::string("SELECT strftime('%d.%m.%Y %M:%H', Time, 'unixepoch') AS TimeStamp, Message FROM "+CDatabaseWrapper::LogTableName+" WHERE Channel = ? ORDER BY Time ASC;");
+const std::string CDatabaseWrapper::GetLogQuery = std::string("SELECT strftime('%d.%m.%Y %H:%M', Time, 'unixepoch', 'localtime') AS TimeStamp, Message FROM "+CDatabaseWrapper::LogTableName+" WHERE Channel = ? ORDER BY rowid DESC LIMIT ? OFFSET ?;");
 const std::string CDatabaseWrapper::InsertLastSeenQuery = std::string("INSERT OR REPLACE INTO "+CDatabaseWrapper::LastSeenTableName+" VALUES(strftime('%s','now'), ?, ?, ?);");
-const std::string CDatabaseWrapper::GetLastSeenQuery = std::string("SELECT strftime('%d.%m.%Y %M:%H', Time, 'unixepoch') AS TimeStamp, Reason FROM "+CDatabaseWrapper::LastSeenTableName+" WHERE (Channel = ?) AND (Nick = ?) ORDER BY Time ASC;");
+const std::string CDatabaseWrapper::GetLastSeenQuery = std::string("SELECT strftime('%d.%m.%Y %H:%M', Time, 'unixepoch', 'localtime') AS TimeStamp, Reason FROM "+CDatabaseWrapper::LastSeenTableName+" WHERE (Channel = ?) AND (Nick = ?) ORDER BY Time ASC;");
 
 CDatabaseWrapper CDatabaseWrapper::Singleton = CDatabaseWrapper();
 
@@ -198,7 +198,7 @@ void CDatabaseWrapper::LogMessage(const std::string & Channel, const std::string
 	}
 }
 
-void CDatabaseWrapper::GetLog(const std::string & Channel, StringPairVector & OutVector)
+void CDatabaseWrapper::GetLog(const std::string & Channel, const int limit, const int offset, StringPairVector & OutVector)
 {
 
 	if(!Connected())
@@ -219,6 +219,20 @@ void CDatabaseWrapper::GetLog(const std::string & Channel, StringPairVector & Ou
 	if(Result != SQLITE_OK)
 	{
 		Output::Error("SQLLite Plugin", { "Bind Channel for Get Log -> ", sqlite3_errmsg(m_dbHandle) });
+		return;
+	}
+
+	Result = sqlite3_bind_int(m_GetLogStatement, 2, limit);
+	if(Result != SQLITE_OK)
+	{
+		Output::Error("SQLLite Plugin", { "Bind Limit for Get Log -> ", sqlite3_errmsg(m_dbHandle) });
+		return;
+	}
+
+	Result = sqlite3_bind_int(m_GetLogStatement, 3, offset);
+	if(Result != SQLITE_OK)
+	{
+		Output::Error("SQLLite Plugin", { "Bind Offset for Get Log -> ", sqlite3_errmsg(m_dbHandle) });
 		return;
 	}
 

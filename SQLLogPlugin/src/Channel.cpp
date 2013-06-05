@@ -2,8 +2,10 @@
 
 const std::string CChannel::HelpCommand("Help");
 const std::string CChannel::LogCommand("Log [Enable|Disable]");
-const std::string CChannel::PrintLogCommand("PrintLog");
+const std::string CChannel::PrintLogCommand("PrintLog LINES [OFFSET]");
+const std::string CChannel::PrintLogPrvtCommand("PrintLogPrvt LINES [OFFSET]");
 const std::string CChannel::LastSeenCommand("LastSeen NICKNAME { NICKNAME }");
+const std::string CChannel::LogOutputPrefix("{Chat Log} ");
 
 const CChannel::CommandFunctionMap CChannel::m_CommandFunctionMap = {
 																		{"Log", &CChannel::CommandLog },
@@ -13,6 +15,11 @@ const CChannel::CommandFunctionMap CChannel::m_CommandFunctionMap = {
 																		{"Printlog", &CChannel::CommandPrint },
 																		{"PrintLog", &CChannel::CommandPrint },
 																		{"printLog", &CChannel::CommandPrint },
+
+																		{"printlogprvt", &CChannel::CommandPrintPrvt },
+																		{"Printlogrvtp", &CChannel::CommandPrintPrvt },
+																		{"PrintLogPrvt", &CChannel::CommandPrintPrvt },
+																		{"PrintlogPrvt", &CChannel::CommandPrintPrvt },
 
 																		{"lastseen", &CChannel::CommandLastSeen },
 																		{"LastSeen", &CChannel::CommandLastSeen },
@@ -149,7 +156,7 @@ void CChannel::OnNotice(const std::string & Nick, const std::string & User, cons
 
 void CChannel::OnMessage(const std::string & Nick, const std::string & User, const std::string & Host, const std::string & Message, IResponseInterface & Response)
 {
-	if(m_LogEnabled)
+	if((m_LogEnabled) && ((Nick != m_BotName) || (Message.substr(0, LogOutputPrefix.size()) != LogOutputPrefix)))
 	{
 		std::string LogMessage("<" + Nick + "> " + Message);
 		CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, LogMessage);
@@ -166,7 +173,7 @@ void CChannel::OnMessage(const std::string & Nick, const std::string & User, con
 
 		if(Entry != m_CommandFunctionMap.end())
 		{
-			(this->*(Entry->second))(Parameter, Response);
+			(this->*(Entry->second))(Nick, Parameter, Response);
 		}
 		else
 		{
@@ -218,7 +225,7 @@ void CChannel::ParseCommand(const std::string & MessageTail, std::string & Comma
 //											//
 //------------------------------------------//
 
-void CChannel::CommandLog(const StringVector & Parameter, IResponseInterface & Response)
+void CChannel::CommandLog(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response)
 {
 	if(Parameter.empty())
 	{
@@ -243,7 +250,7 @@ void CChannel::CommandLog(const StringVector & Parameter, IResponseInterface & R
 		else
 		{
 			m_LogEnabled = true;
-			Response.SendMessage(m_ChannelName, std::string(" --- Logging has been enabled --- "));
+			Response.SendMessage(m_ChannelName, std::string(" --- Logging has been enabled by " + Sender + " --- "));
 		}
 
 		return;
@@ -255,8 +262,8 @@ void CChannel::CommandLog(const StringVector & Parameter, IResponseInterface & R
 		{
 			LogUserList(std::string("Logging disabled"));
 			m_LogEnabled = false;
-			CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, std::string(" --- Logging has been disabled --- "));
-			Response.SendMessage(m_ChannelName, std::string(" --- Logging has been disabled --- "));
+			CDatabaseWrapper::Singleton.LogMessage(m_ChannelName, std::string("<" + m_BotName + "> --- Logging has been disabled by " + Sender + " --- "));
+			Response.SendMessage(m_ChannelName, std::string(" --- Logging has been disabled by " + Sender + " --- "));
 		}
 		else
 		{
@@ -272,12 +279,107 @@ void CChannel::CommandLog(const StringVector & Parameter, IResponseInterface & R
 
 }
 
-void CChannel::CommandPrint(const StringVector & Parameter, IResponseInterface & Response)
+void CChannel::CommandPrint(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response)
 {
-	Response.SendMessage(m_ChannelName, std::string("Pront"));
+	//Response.SendMessage(m_ChannelName, std::string("Pront"));
+	if(SendLog(m_ChannelName, Parameter, LogOutputPrefix, PrintLogCommand, Response))
+	{
+		Response.SendMessage(m_ChannelName, std::string(" --- Log Output --- "));
+	}
 }
 
-void CChannel::CommandLastSeen(const StringVector & Parameter, IResponseInterface & Response)
+void CChannel::CommandPrintPrvt(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response)
+{
+	SendLog(Sender, Parameter, LogOutputPrefix + m_ChannelName + " ", PrintLogPrvtCommand, Response);
+}
+
+bool CChannel::SendLog(const std::string & Reciever, const StringVector & Parameter, const std::string & Prefix, const std::string & Command, IResponseInterface & Response)
+{
+	if(Parameter.empty())
+	{
+		Response.SendMessage(m_ChannelName, std::string("No Line Count given! Use the Command as follows:"));
+		Response.SendMessage(m_ChannelName, Command);
+		return false;
+	}
+
+	if(Parameter.size() > 2)
+	{
+		Response.SendMessage(m_ChannelName, std::string("Too much Parameters! Use the Command as follows:"));
+		Response.SendMessage(m_ChannelName, Command);
+		return false;
+	}
+
+	int lines = 0;
+	int offset = 0;
+
+	try 
+	{
+		lines = std::stoi(Parameter[0]);
+	}
+	catch(const std::invalid_argument & excpetion)
+	{
+		Response.SendMessage(m_ChannelName, std::string("Invalid Parameter! Use the Command as follows:"));
+		Response.SendMessage(m_ChannelName, Command);
+		return false;
+	}
+	catch(const std::out_of_range & excpetion)
+	{
+		Response.SendMessage(m_ChannelName, std::string("LIMIT is too large! Use the Command as follows:"));
+		Response.SendMessage(m_ChannelName, Command);
+		return false;
+	}
+
+	if(lines <= 0)
+	{
+		Response.SendMessage(m_ChannelName, std::string("No negative Values! Use the Command as follows:"));
+		Response.SendMessage(m_ChannelName, Command);
+		return false;
+	}
+
+	if(Parameter.size() > 1)
+	{
+		try 
+		{
+			offset = std::stoi(Parameter[1]);
+		}
+		catch(const std::invalid_argument & excpetion)
+		{
+			Response.SendMessage(m_ChannelName, std::string("Invalid Parameter! Use the Command as follows:"));
+			Response.SendMessage(m_ChannelName, Command);
+			return false;
+		}
+		catch(const std::out_of_range & excpetion)
+		{
+			Response.SendMessage(m_ChannelName, std::string("OFFSET is too large! Use the Command as follows:"));
+			Response.SendMessage(m_ChannelName, Command);
+			return false;
+		}
+
+		if(offset < 0)
+		{
+			offset = 0;
+		}
+	}
+
+	StringPairVector Result;
+
+	CDatabaseWrapper::Singleton.GetLog(m_ChannelName, lines, offset, Result);
+
+	if(Result.empty())
+	{
+		Response.SendMessage(Reciever, std::string("No Lines found!"));
+		return false;
+	}
+
+	for(StringPairVector::reverse_iterator it = Result.rbegin(); it != Result.rend(); ++it)
+	{
+		Response.SendMessage(Reciever, Prefix + "[" + it->first + "] " + it->second);
+	}
+
+	return true;
+}
+
+void CChannel::CommandLastSeen(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response)
 {
 	bool NameGiven = false;
 
@@ -321,7 +423,7 @@ void CChannel::CommandLastSeen(const StringVector & Parameter, IResponseInterfac
 	}
 }
 
-void CChannel::CommandHelp(const StringVector & Parameter, IResponseInterface & Response)
+void CChannel::CommandHelp(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response)
 {
 
 	Response.SendMessage(m_ChannelName, std::string("I know the following commands:"));
@@ -333,6 +435,7 @@ void CChannel::PrintCommands(IResponseInterface & Response)
 	Response.SendMessage(m_ChannelName, CChannel::HelpCommand);
 	Response.SendMessage(m_ChannelName, CChannel::LogCommand);
 	Response.SendMessage(m_ChannelName, CChannel::PrintLogCommand);
+	Response.SendMessage(m_ChannelName, CChannel::PrintLogPrvtCommand);
 	Response.SendMessage(m_ChannelName, CChannel::LastSeenCommand);
 }
 

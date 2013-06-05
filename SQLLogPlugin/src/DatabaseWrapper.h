@@ -21,7 +21,7 @@ public:
 	bool Connected();
 
 	void LogMessage(const std::string & Channel, const std::string & Message);
-	void GetLog(const std::string & Channel, StringPairVector & OutVector);
+	void GetLog(const std::string & Channel, const int limit, const int offset, StringPairVector & OutVector);
 
 	void UserLeft(const std::string & Channel, const std::string & Nick, const std::string & Reason);
 	void LastSeen(const std::string & Channel, const std::string & Nick, std::string & Time, std::string & Reason);

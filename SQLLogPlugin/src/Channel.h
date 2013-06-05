@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <stdexcept>
 
 #include "PlugInInterface.h"
 #include "DatabaseWrapper.h"
@@ -35,13 +36,16 @@ public:
 private:
 	typedef std::set<std::string> StringSet;
 	typedef std::vector<std::string> StringVector;
-	typedef void (CChannel::*CommandFunctionName)(const StringVector & Parameter, IResponseInterface & Response);
+	typedef void (CChannel::*CommandFunctionName)(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response);
 	typedef std::map<std::string, CommandFunctionName> CommandFunctionMap;
 
 	static const std::string HelpCommand;
 	static const std::string LogCommand;
 	static const std::string PrintLogCommand;
+	static const std::string PrintLogPrvtCommand;
 	static const std::string LastSeenCommand;
+
+	static const std::string LogOutputPrefix;
 
 	static const CommandFunctionMap m_CommandFunctionMap;
 
@@ -58,10 +62,13 @@ private:
 
 	void ParseCommand(const std::string & MessageTail, std::string & Command, StringVector & Parameter);
 
-	void CommandLog(const StringVector & Parameter, IResponseInterface & Response);	
-	void CommandPrint(const StringVector & Parameter, IResponseInterface & Response);
-	void CommandLastSeen(const StringVector & Parameter, IResponseInterface & Response);
-	void CommandHelp(const StringVector & Parameter, IResponseInterface & Response);
+	void CommandLog(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response);	
+	void CommandPrint(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response);
+	void CommandPrintPrvt(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response);
+	void CommandLastSeen(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response);
+	void CommandHelp(const std::string & Sender, const StringVector & Parameter, IResponseInterface & Response);
 
 	void PrintCommands(IResponseInterface & Response);
+
+	bool SendLog(const std::string & Reciever, const StringVector & Parameter, const std::string & Prefix, const std::string & Command, IResponseInterface & Response);
 };
