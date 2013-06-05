@@ -192,7 +192,7 @@ void CServer::Login()
 
 void CServer::Close()
 {
-	if(m_Socketfd != -1)
+	if(m_Socketfd == -1)
 	{
 		return;
 	}

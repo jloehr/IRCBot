@@ -78,7 +78,22 @@ void CChannel::OnUserList(const tinyirc::IRCMessage & Message)
 {
 	StringVector & Nicks = (*Message.Data.UserList.Nicks);
 
-	m_NickList = StringSet(Nicks.begin(), Nicks.end());
+	for(StringVector::iterator it = Nicks.begin(); it != Nicks.end(); ++it)
+	{
+		std::string & Nick = (*it);
+
+		if(!Nick.empty())
+		{
+			if((Nick[0] == '@') || (Nick[0] == '+'))
+			{
+				m_NickList.insert(Nick.substr(1));
+			}	
+			else
+			{
+				m_NickList.insert(Nick);
+			}
+		}
+	}
 
 	CResponseWrapper ResponseInterface(m_IRCParser, m_ServerConnection, this);
 
