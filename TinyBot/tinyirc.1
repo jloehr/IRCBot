@@ -1,0 +1,48 @@
+.TH "tinybot" "1" "JUNI 2013" "Julian Löhr" "Manual"                                 
+.SH NAME                                                                     
+tinybot \- An IRC Bot
+.SH SYNOPSIS
+.B tinybot
+[\-n \fIBotname\fR]
+[\-l \fIPlugIn-File\fR]..
+[\fIserveraddress\fR[:\fIport\fR]
+[\fIchannel\fR[,\fIkey\fR]]..]..
+
+
+.SH DESCRIPTION
+A basic IRC Bot. It provides some basic functionality like connect to servers, joining channels and reconnect.
+Additional features are added by Plugins, wich are loaded dynamicly on startup.
+.P
+You can provide multiple serveraddresses to connect to more than one server. But equal serveraddresses are not pooled. If no port is given the inoffical IRC port 6667 is used.
+The channels are associated with the previous server and are seperated with a space. The channelnames must have the "#" or "&" prefix.
+.P
+To shut down the bot just type in "exit" or "quit" and press enter.
+
+
+.SH OPTIONS
+The apperance and order of options does not matter.
+
+.IP "-n \fIBotname\fR"
+The Name of the Bot in IRC.
+
+.IP "-l \fIPlugIn-File\fR"
+Loads the given PlugIn. Your can provide this option more than once.
+
+
+.SH EXAMPLES
+
+.TP
+Loads the \fBSQLLogPlugin\fR, connects to \fBirc.quakenet.org\fR and joins the channel \fB#Foo\fR
+.B tinybot 
+\-l ./sqllogplugin.so irc.quakenet.org "#Foo"
+.PP
+
+.TP
+The bot loades both plugins, \fBplugin1\fR and \fBplugin2\fR, has the name \fBFoobar\fR, then joins channel \fB#foo\fR with the key \fBbar\fR and channel \fB#help\fR on \fBirc.quakenet.org\fR and also channel \fB#lobby\fR on \fBfoo.randomirc.org\fR with port \fB12345\fR
+.B tinybot 
+\-n FooBar -l ./plugin1.so -l ./plugin2.so irc.quakenet.org "#foo,bar" "#help" foo.randomirc.org:12345 "#lobby"
+.PP
+
+
+.SH AUTHOR
+Julian Löhr
