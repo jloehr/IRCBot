@@ -1,7 +1,7 @@
 INCDIR = -I ./include/
 LIBDIR = ./lib/
 BUILDDIR = ./bin/
-HEADERDIR = $(BUILDDIR)include/ 
+HEADERDIR = $(BUILDDIR)include/
 SOURCEDIR = ./src/
 
 CC=g++
@@ -41,4 +41,4 @@ copyheaders:
 
 #clean
 cleanup:
-	-rm -f $(LIBRARY) $(SOURCEDIR)*.o Makefile.dep
+	-rm -f $(LIBRARY) $(SOURCEDIR)*.o Makefile.dep $(HEADERDIR)*.h
