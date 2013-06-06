@@ -1,0 +1,32 @@
+SQLLogPlugin is a Plugin for TinyBot.
+Version 1.0
+
+The Pluging logs, if enabled, the chat history and displays it when requested. Additional a "LastSeen" feature is implemented as well. It uses sqlite and creates a "IRCLog.sqlite"-File, therefore you need permission to create files in the calling directory.
+
+
+- IRC Commands - 
+
+Commands are send as normal message to the IRC Channel and need the Prefix "BOTNAME: " to be recognized. E.g. if your bot has the default name "TinyBot" a command would look like "TinyBot: Log enable".
+
+The following Commands are kown:
+ * Help									Display the command list
+ * Log [Enable|Disable]					Shows if logging is enabled or enables/disables it
+ * PrintLog LINES [OFFSET]				Prints log into the channel, LINES is the number of lines to be printed and OFFSET is a optional offset of lines to be printed, the latest lines are printed, it is recommended to not print much lines at once, because of anti-flooding mechanisms.
+ * PrintLogPrvt LINES [OFFSET]			Like PrintLog but sends the log directly to you as Privat Message.
+ * LastSeen NICKNAME { NICKNAME }		Prints information when a user was last seen in the channel and an additional reason why he wasn't seen any more, like Quit, Name changed etc. You can provide more than one name, but be careful with anti-flooding. Operator and Voice flags are ignored e.g. "LastSeen @Foo" is the same as "LastSeen Foo". The LastSeen logging is disabled if logging is disabled.
+
+
+- Dependicies - 
+
+The Plugin uses the STL and SQLite. Also the C++11 standart is used.
+
+
+- How to Build -
+
+You might use the given Makefile. It assumes that the TinyIRC Source are in the same Parent Folder and copies the made binary to "./../TinyBot/bin/".
+
+The compiler needs the "std=c++11" and "fPIC" flag, last because the Plugin-Mechanism uses dynamic libraries. Further compiler flags are "Wall" and "gdb" for debug purposes, but they are not needed.
+The linker needs the "-shared" flag and sqlite3 library.
+The output file is named "sqllogplugin.so" but you can name it whatever you want.
+
+It recommended to change the Makefile for your needs or write a complete new one.
