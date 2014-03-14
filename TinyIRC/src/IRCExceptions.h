@@ -49,6 +49,9 @@ namespace tinyirc
 		{ }																\
 	};																	\
 
+	//ConnectionPass
+	IRCDerivedException(IRCInvalidConnectionPassCharacter, "In the given Connection Password are invalid Characters found!")
+
 	//Nickname
 	IRCDerivedException(IRCNickTooLong, "The given Nickname is too long. It can be up to 9 Characters long.")
 	IRCDerivedException(IRCNoNickGiven, "The given Nickname is emtpy!")

@@ -58,7 +58,7 @@ CTinyBot * CTinyBotFactory::Build()
 
 void CTinyBotFactory::SetupServers()
 {
-	for(StringPairStringVectorPairVector::iterator it = m_ServerVector.begin(); it != m_ServerVector.end(); ++it)
+	for(ServerDataStringVectorPairVector::iterator it = m_ServerVector.begin(); it != m_ServerVector.end(); ++it)
 	{
 		m_Product->Connect(*((*it)->first), *((*it)->second));
 		CleanUp(*it);
@@ -140,27 +140,56 @@ void CTinyBotFactory::ParseArguments()
 			//Server	
 			default:
 				{
-					const char * DelimiterPosition = strrchr(m_argv[i], ':');
+					const char * PortDelemiterPosition = strchr(m_argv[i], ':');
+					const char * PassDelemiterPosition = strchr(m_argv[i], ',');
 
 					std::string * ServerAdress = NULL;
 					std::string * ServerPort = NULL;
-					
-					if(DelimiterPosition == NULL)
+					std::string * ServerPass = NULL;
+
+					if((PortDelemiterPosition == NULL) && (PassDelemiterPosition == NULL))
 					{
 						ServerAdress = new std::string(m_argv[i]);
 						ServerPort = new std::string(DEFAULT_PORT);
-					}
+						ServerPass = new std::string();
+					} 
 					else
 					{
+						const char *  ServerAdressEnd;
 
-						ServerAdress = new std::string(m_argv[i], (size_t)(DelimiterPosition - m_argv[i]));
-						ServerPort = new std::string(DelimiterPosition + 1);
+						if((PortDelemiterPosition != NULL) && (PassDelemiterPosition != NULL))
+						{
+							if(PortDelemiterPosition < PassDelemiterPosition)
+							{
+								ServerAdressEnd = PortDelemiterPosition;
+								ServerPort = new std::string(PortDelemiterPosition + 1, (size_t)(PassDelemiterPosition - PortDelemiterPosition) - 1);
+								ServerPass = new std::string(PassDelemiterPosition + 1);
+							}
+							else
+							{
+								ServerAdressEnd = PassDelemiterPosition;
+								ServerPort = new std::string(PortDelemiterPosition + 1);
+								ServerPass = new std::string(PassDelemiterPosition + 1, (size_t)(PortDelemiterPosition - PassDelemiterPosition) - 1);
+							}
+
+						}
+						else if(PortDelemiterPosition != NULL)
+						{
+							ServerAdressEnd = PortDelemiterPosition;
+							ServerPort = new std::string(PortDelemiterPosition + 1);
+						}				
+						else
+						{
+							ServerAdressEnd = PassDelemiterPosition;
+							ServerPass = new std::string(PassDelemiterPosition + 1);
+						}
+
+						ServerAdress = new std::string(m_argv[i], (size_t)(ServerAdressEnd - m_argv[i]));
 					}
 
 					m_ChannelVector = new StringPairVector();
 
-					StringPairStringVectorPair * NewServer = new StringPairStringVectorPair(new StringPair(ServerAdress, ServerPort), m_ChannelVector);
-
+					ServerDataStringVectorPair * NewServer = new ServerDataStringVectorPair(new ServerData(ServerAdress, ServerPort, ServerPass), m_ChannelVector);
 
 					m_ServerVector.push_back(NewServer);
 				}
@@ -177,21 +206,21 @@ void CTinyBotFactory::ParseArguments()
 //------------------------------------------//
 
 
-void CTinyBotFactory::CleanUp(StringPairStringVectorPair * Entry)
+void CTinyBotFactory::CleanUp(ServerDataStringVectorPair * Entry)
 {
 	StringPair * Tmp;
 	StringPairVector * TmpVector;
+	ServerDataPointer TmpServerData;
 
 	// Delete String Pair
-	Tmp = Entry->first;
+	TmpServerData = Entry->first;
 	Entry->first = NULL;
 
-	delete Tmp->first;
-	delete Tmp->second;
+	TmpServerData->Flush();
 
-	delete Tmp;
+	delete TmpServerData;
 
-	Tmp = NULL;
+	TmpServerData = NULL;
 
 	//delete Vector Content
 	TmpVector = Entry->second;

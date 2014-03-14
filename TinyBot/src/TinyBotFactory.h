@@ -33,7 +33,7 @@ private:
 	const char** m_argv;
 	
 	std::string m_Botname;
-	StringPairStringVectorPairVector m_ServerVector;
+	ServerDataStringVectorPairVector m_ServerVector;
 	StringPairVector * m_ChannelVector;
 	StringVector m_PluginPathVector;
 
@@ -43,5 +43,5 @@ private:
 	void ParseArguments();
 	void SetupServers();
 
-	void CleanUp(StringPairStringVectorPair * Entry);
+	void CleanUp(ServerDataStringVectorPair * Entry);
 };

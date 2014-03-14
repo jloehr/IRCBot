@@ -32,6 +32,7 @@ namespace tinyirc
 		bool Parse(const std::string & Recieved, std::string & Response, IRCMessageVector & Messages);
 
 		void Register(const std::string & Nick, const std::string & RealName, std::string & Package) const;
+		void Register( const std::string & ConnectionPassword, const std::string & Nick, const std::string & RealName, std::string & Package) const;
 		void JoinChannel(const std::string & ChannelName, const std::string & ChannelPass, std::string & Package) const;
 		void SendMessage(const std::string & Reciever, const std::string & Message, std::string & Package) const;
 		void GetClosingPackage(const std::string & ExitMessage, std::string & Package) const;

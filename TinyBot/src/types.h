@@ -16,12 +16,45 @@
 #include <vector>
 #include <map>
 
+typedef struct ServerData {
+public:
+	std::string * Adress;
+	std::string * Port;
+	std::string * Pass;
+
+	ServerData(std::string * Adress, std::string * Port, std::string * Pass)
+	:Adress(Adress), Port(Port), Pass(Pass)
+	{}
+
+	void Flush()
+	{
+		if(Adress != NULL)
+		{
+			delete Adress;
+		}
+
+		if(Port != NULL)
+		{
+			delete Port;
+		}
+
+		if(Pass != NULL)
+		{
+			delete Pass;
+		}
+	}
+
+} * ServerDataPointer;
+
+typedef std::string * StringPointer;
 typedef std::vector<std::string> StringVector;
 typedef std::set<std::string> StringSet;
 typedef std::pair<std::string *, std::string *> StringPair;
 typedef std::vector<StringPair *> StringPairVector;
 typedef std::pair<StringPair *, StringPairVector *> StringPairStringVectorPair;
+typedef std::pair<ServerDataPointer, StringPairVector *> ServerDataStringVectorPair;
 typedef std::vector<StringPairStringVectorPair *> StringPairStringVectorPairVector;
+typedef std::vector<ServerDataStringVectorPair *> ServerDataStringVectorPairVector;
 
 class CServer;
 class CChannel;

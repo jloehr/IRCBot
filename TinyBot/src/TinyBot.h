@@ -30,7 +30,7 @@ public:
 	void Run();
 	void Stop();
 
-	void Connect(const StringPair & Server, const StringPairVector & Channels);
+	void Connect(const ServerData & Server, const StringPairVector & Channels);
 
 private:
 	CTinyBot(const std::string Botname, const StringVector & Plugins);

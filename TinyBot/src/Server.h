@@ -36,7 +36,7 @@
 class CServer
 {
 public:
-	CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const StringPairVector & Channels, const PluginVector & Plugins);
+	CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const std::string & ServerPass, const StringPairVector & Channels, const PluginVector & Plugins);
 	~CServer();
 
 	void Init();
@@ -55,6 +55,7 @@ private:
 	const std::string & m_Botname;
 	const std::string m_ServerAdress;
 	const std::string m_ServerPort;
+	const std::string m_ServerPass;
 
 	PluginPairVector m_Plugins;
 	ChannelMap m_Channels; 

@@ -14,7 +14,7 @@ This implemention uses the C++11 standart, therefore a modern compilier with C++
 
 - How to Build - 
 
-You might use the provided Makefile. It assumes that the TinyIRC sources are in the same parent folder. If so TinyIRC is made and copied, if not the TinyIRC library should be installed on the system or placed with its headers in the include and lib folder.
+You might use the given Makefile. It assumes that the TinyIRC sources are in the same parent folder. If so TinyIRC is made and copied, if not the TinyIRC library should be installed on the system or placed with its headers in the include and lib folder.
 
 The compiler does need the "std=c++11", further compiler flags are "Wall" and "gdb" for debug purposes.
 The Linker does need the libev, libtinyirc and libdl. Last is needed for the Plugin mechanism.

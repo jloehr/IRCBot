@@ -18,8 +18,8 @@ const ev_tstamp	CServer::RECONNECT_INTERVALL = 60.;
 //											//
 //------------------------------------------//
 
-CServer::CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const StringPairVector & Channels, const PluginVector & Plugins)
-	:m_Botname(Botname), m_ServerAdress(ServerAdress), m_ServerPort(ServerPort)
+CServer::CServer(const std::string & Botname, const std::string & ServerAdress, const std::string & ServerPort, const std::string & ServerPass, const StringPairVector & Channels, const PluginVector & Plugins)
+	:m_Botname(Botname), m_ServerAdress(ServerAdress), m_ServerPort(ServerPort), m_ServerPass(ServerPass)
 	,m_Socketfd(-1), m_Connected(false)
 {
 	m_ReconnectTimer.set<CServer, &CServer::timer_cb_TryReconnect>(this);
@@ -180,9 +180,14 @@ void CServer::Login()
 {
 	std::string PackageBuffer;
 
+	if(!m_ServerPass.empty())
+	{
+		Output::Log(m_ServerAdress.c_str(), {"Connection Pass: ", m_ServerPass.c_str()});
+	}
+
 	try
 	{
-		m_IRCParser.Register(m_Botname, m_Botname, PackageBuffer);
+		m_IRCParser.Register(m_ServerPass, m_Botname, m_Botname, PackageBuffer);
 	}
 	catch(tinyirc::IRCException & exception)
 	{

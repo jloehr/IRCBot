@@ -593,6 +593,11 @@ namespace tinyirc
 	
 	void CParser::Register(const std::string & Nick, const std::string & RealName, std::string & Package) const
 	{
+		Register(std::string(), Nick, RealName, Package);
+	}
+
+	void CParser::Register( const std::string & ConnectionPassword, const std::string & Nick, const std::string & RealName, std::string & Package) const
+	{
 		if(Nick.empty())
 		{
 			throw IRCNoNickGiven();
@@ -623,6 +628,18 @@ namespace tinyirc
 			throw IRCInvalidRealnameCharacters();
 		}
 
+		if(!ConnectionPassword.empty())
+		{
+			if(ConnectionPassword.find_first_of(CParser::NotAllowedCharsForMessages) != std::string::npos)
+			{
+				throw IRCInvalidConnectionPassCharacter();
+			}
+
+			//Pass Command
+			Package += "PASS ";
+			Package += ConnectionPassword + CParser::CommandEnd;
+		}
+
 		//Nick Command
 		Package += "NICK ";
 		Package += Nick + CParser::CommandEnd;
@@ -631,7 +648,6 @@ namespace tinyirc
 		Package += "USER ";
 		Package += Nick + " NULL NULL :" + RealName + CParser::CommandEnd;
 	}
-
 	//------------------------------------------//
 	//											//
 	//				   Join 					//

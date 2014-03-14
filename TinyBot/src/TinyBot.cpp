@@ -148,7 +148,7 @@ void CTinyBot::StopWatchers()
 //											//
 //------------------------------------------//
 
-void CTinyBot::Connect(const StringPair & Server, const StringPairVector & Channels)
+void CTinyBot::Connect(const ServerData & Server, const StringPairVector & Channels)
 {
-	m_Servers.push_back(new CServer(m_Botname, *(Server.first), *(Server.second), Channels, m_Plugins));
+	m_Servers.push_back(new CServer(m_Botname, *(Server.Adress), *(Server.Port), *(Server.Pass), Channels, m_Plugins));
 }
